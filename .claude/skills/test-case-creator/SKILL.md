@@ -1,5 +1,6 @@
 ---
-name: test-case
+name: test-case-creator
+model: sonnet
 description: Generate one atomic, low-level test case (a single check, not a scenario) as a Markdown file with ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification and Expected result, based on the project specs (e.g. ../skypermit/docs/). Use whenever the user asks for a test case, "тест-кейс", a TC, a single check, or wants to turn a risk, rule, boundary or test-plan item into a test, even if they don't say "test case" explicitly. Not for test plans or checklists of many scenarios.
 ---
 
@@ -22,7 +23,28 @@ A second rule hides easily in Expected result: if the outcome contains values th
 
 Setup work (accounts, pilots, aircraft, requests in a given state) belongs in **Preconditions**, not Steps. Steps are only the action under test, usually 1–3 lines. Read-only calls that only observe the result go in **Verification** (see Template), so they do not count as extra steps.
 
-If the request implies several checks, do not merge them. List the candidate atomic checks (one line each) and ask which one to write, or offer to generate each as a separate case.
+If the request implies several checks, do not merge them. List the candidate atomic checks (one line each) and ask which one to write, or offer to generate each as a separate case (in batch mode, see "Batch mode").
+
+## Batch mode (called from cover-gaps)
+
+Batch mode is on when the request says "Batch mode" (the `/cover-gaps` pipeline always does). The pipeline runs unattended, so a question would stall it, and an answer cannot be read back from free text. In batch mode everything in this skill applies, except:
+
+- **Never ask the user anything.** Where this skill says "ask", do this instead:
+
+| Situation | Normal mode | Batch mode |
+|---|---|---|
+| The request implies several checks | list them and ask which one | write only the check for the given `rule_reference` and condition; if it cannot be one atomic case, write nothing and return `SKIPPED` |
+| An equivalent case already exists (same Doc ref and condition) | ask: skip, replace or variant | write nothing, return `SKIPPED: duplicate of <path>` |
+| The check fits no area | propose a new folder and ask | write nothing, return `SKIPPED: no area fits` |
+| A value is undefined in the docs | ask the user to confirm | use `confirmed-facts.md` if it has the value; otherwise write `TBD` plus an `Open question:` line in the case |
+
+- **Do not add rows to `confirmed-facts.md`.** Only the user confirms facts, and in batch mode nobody has answered.
+- **Report the result as one line**, so the pipeline can read it:
+  - `CREATED: <path>` (for example `CREATED: test-cases/gates/TC-GATE-003.md`), or
+  - `SKIPPED: <reason>` (for example `SKIPPED: duplicate of test-cases/gates/TC-GATE-001.md`).
+
+  No summary, no TBD list, no offer of the next case.
+- **This line is a hand-off, not the end of your turn.** In batch mode this skill runs inside the caller's session (for example `/cover-gaps`), and the caller still has steps to do. Right after the line, go back to the caller's instructions and continue with its next step (for `/cover-gaps`: Step 3, verify this case). Do not stop and wait for the user.
 
 ## Inputs
 
@@ -68,7 +90,7 @@ Values not stated in the specs, confirmed by the user. Cite as `confirmed-facts.
 
   If a check fits no area, propose a new folder and code and ask before creating it.
 - `NNN` is the next free three-digit number within that area folder (check existing files first). Never ask the user for it.
-- Before writing, search `test-cases/` for a case with the same Doc ref and the same condition. If one exists, tell the user and ask whether to skip, replace, or write a variant.
+- Before writing, search `test-cases/` for a case with the same Doc ref and the same condition. If one exists, tell the user and ask whether to skip, replace, or write a variant (in batch mode: write nothing and return `SKIPPED: duplicate of <path>`).
 
 ## Template
 
@@ -76,7 +98,7 @@ Build every case from `references/output-template.md`: copy its structure, keep 
 
 Write the case in English; identifiers, paths, `data-testid` values, states, enum values and rule codes stay as in the docs.
 
-Use `references/TC-GATE-001-example.md` as an example of a finished case and its level of detail. Its values are specific to that check; do not copy them into other cases.
+Use `references/example-gate-case.md` as an example of the shape and level of detail of a finished gate case. It holds placeholders and descriptions of the data, not real values, on purpose: concrete values in an example get repeated in every case. Pick every value from the spec.
 
 ### Field rules
 
@@ -109,9 +131,11 @@ Use `references/TC-GATE-001-example.md` as an example of a finished case and its
 
 ## Final message to the user
 
+In batch mode, ignore this section: report only the one line described in "Batch mode" and continue with the caller's next step.
+
 2–4 lines in the user's language: file path, what the case verifies, priority and level. Then, if the case contains any `TBD` not covered by `confirmed-facts.md`, list each one and ask the user to give a value or confirm it stays `TBD`; record each given value in `confirmed-facts.md` and update the case to cite it. If nothing is `TBD`, offer the next related atomic case (e.g. the other side of the boundary, or the negative bypass variant) in one line. If you split a request into several cases, list the ones not yet written.
 
 ## Reference
 
 - `references/output-template.md` — the structure every case follows (sections, fields, placeholders, inline reminders of the field rules).
-- `references/TC-GATE-001-example.md` — a filled-in example of a finished case.
+- `references/example-gate-case.md` — the shape of a finished gate case, with placeholders instead of data.
