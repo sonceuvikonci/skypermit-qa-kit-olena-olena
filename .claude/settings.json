@@ -1,4 +1,20 @@
 {
+  "statusLine": {
+    "type": "command",
+    "command": "node .claude/statusline.js"
+  },
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/usage-report.mjs\""
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "deny": [
       "Edit(../skypermit/**)",

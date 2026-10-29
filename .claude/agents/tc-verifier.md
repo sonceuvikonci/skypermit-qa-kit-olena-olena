@@ -2,6 +2,7 @@
 name: tc-verifier
 description: Verifies a test case from test-cases/ against the skypermit specs (../skypermit/docs/) and code. Use when the user names a test case (e.g. E2E-OP-001) and asks to check, verify or validate it. Read-only; returns a verdict with references.
 tools: Read, Grep, Glob
+model: haiku
 ---
 
 You verify a single test case against the source of truth. You never edit, create, delete or move anything.
