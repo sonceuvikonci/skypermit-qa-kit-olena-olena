@@ -72,41 +72,11 @@ Values not stated in the specs, confirmed by the user. Cite as `confirmed-facts.
 
 ## Template
 
-Use exactly this structure and field order. Write the case in English; identifiers, paths, `data-testid` values, states, enum values and rule codes stay as in the docs.
+Build every case from `references/output-template.md`: copy its structure, keep every section and field in its order (header table with ID, Doc ref, Priority, Level; then Preconditions, Test data, Steps, optional Verification, Expected result), replace every `<placeholder>`, and delete the template's comments. Delete the Verification section when the step's own response shows the result, and the Open question line when nothing is undefined.
 
-```markdown
-# TC-<AREA>-<NNN>: <What is verified, one line>
+Write the case in English; identifiers, paths, `data-testid` values, states, enum values and rule codes stay as in the docs.
 
-| Field | Value |
-|---|---|
-| **ID** | TC-<AREA>-<NNN> |
-| **Doc ref** | `<doc file>` §<section>; rule `<rule code>` if any |
-| **Priority** | High / Medium / Low |
-| **Level** | UI / API / DB |
-
-## Preconditions
-
-1. <State of the system before the step: accounts, records, request state, clock assumptions>
-
-## Test data
-
-| Item | Value |
-|---|---|
-| <field> | <concrete value> |
-
-## Steps
-
-1. <Single action under test>
-
-## Verification
-
-1. <Optional. Read-only call that makes the result visible, e.g. GET of the changed resource. Omit the section if the step's own response shows the result.>
-
-## Expected result
-
-1. Step 1 <returns / shows>: <exact observable value, e.g. status code, field value, state, UI text/selector>
-2. Verification 1 <returns / shows>: <exact observable value>  (only if there is a Verification section)
-```
+Use `references/TC-GATE-001-example.md` as an example of a finished case and its level of detail. Its values are specific to that check; do not copy them into other cases.
 
 ### Field rules
 
@@ -135,6 +105,7 @@ Use exactly this structure and field order. Write the case in English; identifie
 7. Preconditions make all earlier gates pass when a later gate is tested.
 8. File path, ID and title match; the number is not already used.
 9. Every user-confirmed value cites a row in `confirmed-facts.md`.
+10. Section order matches `references/output-template.md`; no `<placeholder>` or template comment is left.
 
 ## Final message to the user
 
@@ -142,4 +113,5 @@ Use exactly this structure and field order. Write the case in English; identifie
 
 ## Reference
 
-See `references/TC-GATE-001-example.md` for a complete example.
+- `references/output-template.md` — the structure every case follows (sections, fields, placeholders, inline reminders of the field rules).
+- `references/TC-GATE-001-example.md` — a filled-in example of a finished case.
