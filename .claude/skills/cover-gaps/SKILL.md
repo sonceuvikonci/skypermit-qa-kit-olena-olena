@@ -1,9 +1,9 @@
 ---
 name: cover-gaps
-description: Find skypermit business rules (rule_reference values from ../skypermit/docs/06-business-rules.md) that have no test case in test-cases/, write one case per rule with the test-case-creator skill, verify each with the tc-verifier subagent, and return a JSON summary. Run manually as /cover-gaps. Arguments - max number of rules and gate (PILOT, AIRCRAFT, ZONE, TIME_WINDOW, REGISTRATION or ALL).
+description: Find skypermit business rules (rule_reference values from the business rules; the list comes from the local ../skypermit/docs/06-business-rules.md via scripts/uncovered-rules.mjs, the only local-docs exception, while the cases are written and verified against Confluence) that have no test case in test-cases/, write one case per rule with the test-case-creator skill, verify each with the tc-verifier subagent, and return a JSON summary. Run manually as /cover-gaps. Arguments - max number of rules and gate (PILOT, AIRCRAFT, ZONE, TIME_WINDOW, REGISTRATION or ALL).
 argument-hint: "[max-rules] [gate]"
 disable-model-invocation: true # expensive pipeline: manual /cover-gaps only
-allowed-tools: Read Grep Glob Write(test-cases/**) Write(reports/**) Edit(test-cases/open-questions.md) Bash(node scripts/uncovered-rules.mjs *) Bash(rm test-cases/*) Skill(test-case-creator) Agent(tc-verifier)
+allowed-tools: Read Grep Glob Write(test-cases/**) Write(reports/**) Edit(test-cases/open-questions.md) Bash(node scripts/uncovered-rules.mjs *) Bash(rm test-cases/*) Skill(test-case-creator) Agent(tc-verifier) mcp__atlassian__getConfluencePage mcp__atlassian__searchConfluenceUsingCql mcp__atlassian__getPagesInConfluenceSpace
 ---
 
 # Cover gaps
@@ -63,7 +63,7 @@ Why one at a time: the gate sits after every case, so a bad case is dropped befo
 
 Invoke the `test-case-creator` skill (Skill tool) with a request like:
 
-> Rule: gate `<gate>`, `rule_reference` `<ref>`, condition "<condition>" (`06-business-rules.md` §6). Write the negative case that violates this rule and expects `422` with this `failing_gate` and `rule_reference`. Batch mode.
+> Rule: gate `<gate>`, `rule_reference` `<ref>`, condition "<condition>" (`06 — Business Rules` §6 in Confluence). Write the negative case that violates this rule and expects `422` with this `failing_gate` and `rule_reference`. Batch mode.
 
 Notes:
 - Gate cases go to `test-cases/gates/`. `REGISTRATION` goes to `registry`, and its Expected result is a registration `422`, not a gate response (the skill's area table decides).
@@ -92,12 +92,12 @@ Then go back to Step 2 with the next rule. When all rules are done, go to Step 4
 
 ### `test-cases/open-questions.md`
 
-`../skypermit/docs/` is read-only, so our open questions live here. Create on first use:
+The Confluence specs are read-only for us, so our open questions live here. Create on first use:
 
 ```markdown
 # Open questions
 
-Gaps found while verifying test cases. Canonical spec status is in `../skypermit/docs/05-open-questions.md`.
+Gaps found while verifying test cases. Canonical spec status is in the Confluence page `05 — Open Questions — Canonical Status` (space SkyPermit Docs).
 
 | # | Case | Question | Where checked | Date |
 |---|---|---|---|---|
@@ -114,7 +114,7 @@ Print the JSON as the last thing in your reply, and also save it to `reports/cov
   "rules_checked": 13,
   "gaps_found": 5,
   "results": [
-    { "rule_reference": "<from 06-business-rules.md>", "gate": "TIME_WINDOW", "case_id": "TC-GATE-001", "verdict": "matches", "kept": true, "needs_review": false, "reason": null }
+    { "rule_reference": "<from 06 — Business Rules>", "gate": "TIME_WINDOW", "case_id": "TC-GATE-001", "verdict": "matches", "kept": true, "needs_review": false, "reason": null }
   ],
   "open_questions": [ { "case_id": "TC-GATE-002", "question": "..." } ]
 }
