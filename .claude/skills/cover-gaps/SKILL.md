@@ -1,9 +1,9 @@
 ---
 name: cover-gaps
-description: Find skypermit business rules (rule_reference values from the business rules; the list comes from the local ../skypermit/docs/06-business-rules.md via scripts/uncovered-rules.mjs, the only local-docs exception, while the cases are written and verified against Confluence) that have no test case in test-cases/, write one case per rule with the test-case-creator skill, verify each with the tc-verifier subagent, and return a JSON summary. Run manually as /cover-gaps. Arguments - max number of rules and gate (PILOT, AIRCRAFT, ZONE, TIME_WINDOW, REGISTRATION or ALL).
+description: Find skypermit business rules (rule_reference values from the business rules; the list comes from the local ../skypermit/docs/06-business-rules.md via scripts/uncovered-rules.mjs, the only local-docs exception, while the cases are written and verified against Confluence) that have no test case in test-cases/, write one case per rule with the ui-test-case-creator skill, verify each with the tc-verifier subagent, and return a JSON summary. Run manually as /cover-gaps. Arguments - max number of rules and gate (PILOT, AIRCRAFT, ZONE, TIME_WINDOW, REGISTRATION or ALL).
 argument-hint: "[max-rules] [gate]"
 disable-model-invocation: true # expensive pipeline: manual /cover-gaps only
-allowed-tools: Read Grep Glob Write(test-cases/**) Write(reports/**) Edit(test-cases/open-questions.md) Bash(node scripts/uncovered-rules.mjs *) Bash(rm test-cases/*) Skill(test-case-creator) Agent(tc-verifier) mcp__atlassian__getConfluencePage mcp__atlassian__searchConfluenceUsingCql mcp__atlassian__getPagesInConfluenceSpace
+allowed-tools: Read Grep Glob Write(test-cases/**) Write(reports/**) Edit(test-cases/open-questions.md) Bash(node scripts/uncovered-rules.mjs *) Bash(rm test-cases/*) Skill(ui-test-case-creator) Agent(tc-verifier) mcp__atlassian__getConfluencePage mcp__atlassian__searchConfluenceUsingCql mcp__atlassian__getPagesInConfluenceSpace
 ---
 
 # Cover gaps
@@ -17,7 +17,7 @@ Why the verification step exists: cases are generated from the same docs a revie
 | Step | Performed by | Model |
 |---|---|---|
 | 1. List the gaps | `scripts/uncovered-rules.mjs` | none (plain comparison of two lists, no model) |
-| 2. Write a case | `test-case-creator` skill | `sonnet` (set in its frontmatter): accuracy against the specs matters more than depth |
+| 2. Write a case | `ui-test-case-creator` skill | `sonnet` (set in its frontmatter): accuracy against the specs matters more than depth |
 | 3. Verify a case | `tc-verifier` subagent | `haiku` (set in its frontmatter): comparing a case with the spec is a lookup task. This is the starting choice; whether Haiku is enough must be checked on a deliberately corrupted case (it should return "does not match"). If it misses, move the verifier up to `sonnet` |
 | 4. Verdict handling and JSON | this session | the session's own model |
 
@@ -52,16 +52,16 @@ Process rules in the order the script returned them, **one rule at a time**, as 
 
 ```
 for each rule:
-  Step 2: write the case (test-case-creator)
+  Step 2: write the case (ui-test-case-creator)
   Step 3: verify that case (tc-verifier) and act on the verdict
   only then move to the next rule
 ```
 
-Why one at a time: the gate sits after every case, so a bad case is dropped before the next one is written, and the next case is not built next to a wrong one. It also keeps IDs safe: `test-case-creator` picks the next free ID by looking at the folder, so parallel writes would collide. Never write several cases first and verify them together at the end, and never launch several `tc-verifier` calls in one message.
+Why one at a time: the gate sits after every case, so a bad case is dropped before the next one is written, and the next case is not built next to a wrong one. It also keeps IDs safe: `ui-test-case-creator` picks the next free ID by looking at the folder, so parallel writes would collide. Never write several cases first and verify them together at the end, and never launch several `tc-verifier` calls in one message.
 
 ### Step 2: Write the case
 
-Invoke the `test-case-creator` skill (Skill tool) with a request like:
+Invoke the `ui-test-case-creator` skill (Skill tool) with a request like:
 
 > Rule: gate `<gate>`, `rule_reference` `<ref>`, condition "<condition>" (`06 — Business Rules` §6 in Confluence). Write the negative case that violates this rule and expects `422` with this `failing_gate` and `rule_reference`. Batch mode.
 
@@ -88,7 +88,7 @@ Do not edit a case to make it pass; the verifier only reports, and silently fixi
 
 Then go back to Step 2 with the next rule. When all rules are done, go to Step 4.
 
-**Do not end your turn inside the loop.** The `CREATED:`/`SKIPPED:` line from `test-case-creator` and the verifier's verdict are intermediate results, not the end of the run. Keep going in the same turn until Step 4 has printed the JSON summary; the run is finished only then. If a tool call or the verifier fails, record it in `results` (`verdict: "skipped"`, `reason` = what failed) and continue with the next rule.
+**Do not end your turn inside the loop.** The `CREATED:`/`SKIPPED:` line from `ui-test-case-creator` and the verifier's verdict are intermediate results, not the end of the run. Keep going in the same turn until Step 4 has printed the JSON summary; the run is finished only then. If a tool call or the verifier fails, record it in `results` (`verdict: "skipped"`, `reason` = what failed) and continue with the next rule.
 
 ### `test-cases/open-questions.md`
 

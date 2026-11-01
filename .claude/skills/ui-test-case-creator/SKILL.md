@@ -1,8 +1,8 @@
 ---
-name: test-case-creator
+name: ui-test-case-creator
 model: sonnet
 allowed-tools: mcp__atlassian__getConfluencePage, mcp__atlassian__searchConfluenceUsingCql, mcp__atlassian__getPagesInConfluenceSpace
-description: Generate one atomic, low-level test case (a single check, not a scenario) as a Markdown file with ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification and Expected result, based on the project specs (Confluence space SkyPermit Docs). Use whenever the user asks for a test case, "тест-кейс", a TC, a single check, or wants to turn a risk, rule, boundary or test-plan item into a test, even if they don't say "test case" explicitly. Not for test plans or checklists of many scenarios.
+description: Generate UI/E2E test cases (one atomic, low-level check per case, not a scenario) as Markdown files with ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification and Expected result, based on the project specs (Confluence space SkyPermit Docs). Covers only checks that work through the form and `data-testid` selectors, and applies the test-design techniques BV, EP and state transition. Use whenever the user asks for a UI test case, "тест-кейс", a TC, an E2E check, or wants to turn a UI risk, rule, boundary or test-plan item into a test, even if they don't say "test case" explicitly. Do NOT use for API test cases (a separate API test-case skill will cover them), nor for test plans or checklists of many scenarios.
 ---
 
 # Test Case
@@ -25,6 +25,16 @@ A second rule hides easily in Expected result: if the outcome contains values th
 Setup work (accounts, pilots, aircraft, requests in a given state) belongs in **Preconditions**, not Steps. Steps are only the action under test, usually 1–3 lines. Read-only calls that only observe the result go in **Verification** (see Template), so they do not count as extra steps.
 
 If the request implies several checks, do not merge them. List the candidate atomic checks (one line each) and ask which one to write, or offer to generate each as a separate case (in batch mode, see "Batch mode").
+
+## Test design techniques
+
+When a request covers a rule, field, or state model (not one named check), derive the candidate checks with these techniques. Every candidate is still **one atomic case**; the techniques decide which cases are needed, not how many checks go into one.
+
+- **BV (boundary value analysis)**: for each numeric, date/time or length limit, one case at the exact boundary and one at one unit past it (valid side and invalid side are separate cases).
+- **EP (equivalence partitioning)**: for each input, one case per valid class and one per invalid class, with one representative value each. Do not write several cases for values of the same class.
+- **State transition**: one case per allowed transition and one per forbidden transition that the spec defines (taken from the state model in `02 — Request Lifecycle`).
+
+Workflow: list the candidates (technique, condition, one line each), then write them one by one. In normal mode, show the list and write all of it unless the user narrows it. In batch mode, write only the candidate that matches the given `rule_reference` and condition (see below).
 
 ## Batch mode (called from cover-gaps)
 

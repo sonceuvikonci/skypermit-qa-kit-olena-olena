@@ -19,7 +19,7 @@ The specs are no longer read from `../skypermit/docs/`. Read them through the At
 
 ### Exception: `scripts/uncovered-rules.mjs`
 
-This script cannot call MCP, so it keeps reading the local `../skypermit/docs/06-business-rules.md` (and `07-clarifications.md`). It is the only place that still uses local docs. Its list of `rule_reference` values can be stale if Confluence changed; test-case-creator and tc-verifier still check every rule against Confluence.
+This script cannot call MCP, so it keeps reading the local `../skypermit/docs/06-business-rules.md` (and `07-clarifications.md`). It is the only place that still uses local docs. Its list of `rule_reference` values can be stale if Confluence changed; ui-test-case-creator and tc-verifier still check every rule against Confluence.
 
 ## Layout
 
@@ -33,7 +33,7 @@ workspace/
     └── .claude/                # planned
         ├── settings.json       # shared project permissions
         ├── settings.local.json # personal settings, not committed
-        ├── skills/             # planned: test-plan, test-case-creator (with examples/ and templates/)
+        ├── skills/             # planned: test-plan, ui-test-case-creator (with examples/ and templates/)
         └── agents/             # planned: tc-verifier subagent
 ```
 
