@@ -1,0 +1,10 @@
+{
+  "rules_checked": 13,
+  "gaps_found": 6,
+  "results": [
+    { "rule_reference": "TSD-4 §2.1", "gate": "TIME_WINDOW", "case_id": "TC-GATE-001", "verdict": "matches", "kept": true, "needs_review": false, "reason": null },
+    { "rule_reference": "TSD-4 §2.2", "gate": "TIME_WINDOW", "case_id": "TC-GATE-002", "verdict": "matches", "kept": true, "needs_review": false, "reason": null },
+    { "rule_reference": "TSD-4 §3", "gate": "TIME_WINDOW", "case_id": "TC-GATE-003", "verdict": "matches", "kept": true, "needs_review": false, "reason": null }
+  ],
+  "open_questions": []
+}

@@ -11,7 +11,8 @@
   ],
   "confluence_url": null,
   "notes": [
-    "Мітки: ui, ws3.",
-    "Посилання на Confluence немає, лише текстова згадка: «Confluence → простір SkyPermit → сторінка «04 — Frontend spec», розділ Reviewer queue.»"
+    "Текстова згадка документації без посилання: «Confluence → простір SkyPermit → сторінка «04 — Frontend spec», розділ Reviewer queue.»",
+    "Віддалених посилань (remote links) у задачі немає.",
+    "Інші мітки: ws3"
   ]
 }

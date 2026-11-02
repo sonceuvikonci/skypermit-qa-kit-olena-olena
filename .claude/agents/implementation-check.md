@@ -26,8 +26,9 @@ For each AC, separately:
 - **implemented**: every claim in the AC is confirmed by code you opened. Give `file:line` evidence for each claim (condensed, but all claims covered).
 - **partial**: some claims are confirmed, others are missing, wrong, or you cannot confirm them. State what exists (with `file:line`) and what is missing or differs (e.g. wrong threshold, wrong status code, `rule_reference` not returned, state not persisted, no `data-testid`).
 - **not_found**: no implementation of this AC found. List the searches you ran (terms and paths) so the result can be checked.
+- **Missing element rule:** if the element the AC is about (e.g. a filter, a reset button, a message) is absent from the code, the status is `not_found`. This holds even when adjacent functionality exists (e.g. the queue table). Adjacent functionality is not partial implementation. Mention it in Details as a separate line ("Adjacent, not counted: ...").
 
-When in doubt between implemented and partial, choose partial. When the code contradicts the AC (e.g. returns 400 instead of 422), that is `partial` and the difference is spelled out.
+When in doubt between implemented and partial, choose partial. This applies only when the AC's element exists in the code and some claims are unconfirmed. It does not apply when the element is absent altogether: that is `not_found` (see the missing element rule). When the code contradicts the AC (e.g. returns 400 instead of 422), that is `partial` and the difference is spelled out.
 
 ## Overall verdict
 
@@ -69,6 +70,7 @@ Answer in the user's language (the AC language by default).
 
 ## Open questions
 <ambiguities, malformed AC, code vs AC conflicts, things that could not be verified>
+Always state explicitly what you did not verify. For example, if you did not check whether the API supports a needed parameter (e.g. `zone_code` in `api.listFlightRequests`), write "not verified: ...". Never leave "not verified" silent.
 ```
 
 Keep it concise: one short Details block per AC, no code dumps.

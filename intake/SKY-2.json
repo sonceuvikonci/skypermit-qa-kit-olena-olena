@@ -11,10 +11,9 @@
   ],
   "confluence_url": null,
   "notes": [
-    "Мітки: api, ws3; check_type = api за міткою api (ws3 не впливає).",
-    "Посилання на Confluence немає ні в описі, ні у remote links; є лише текстова згадка: «Confluence → простір SkyPermit → сторінки «03 — API contract» і «06 — Business rules», розділ 1.4».",
-    "Розділ «Правило»: «TSD-4 §2.1 — мінімальний lead time.»",
-    "Розділ «Вимоги»: «Confluence → простір SkyPermit → сторінки «03 — API contract» і «06 — Business rules», розділ 1.4.»",
-    "AC 3 у джерелі містить незбалансовані дужки/бектіки: `{id`}) — наведено дослівно."
+    "Мітки: api, ws3.",
+    "Текстова згадка документації без посилання: «Confluence → простір SkyPermit → сторінки «03 — API contract» і «06 — Business rules», розділ 1.4.»",
+    "Секція «Правило»: «TSD-4 §2.1 — мінімальний lead time.»",
+    "Віддалених посилань (remote links) немає."
   ]
 }
