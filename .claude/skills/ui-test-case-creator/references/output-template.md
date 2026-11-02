@@ -13,7 +13,7 @@ How to use this template:
 | Field | Value |
 |---|---|
 | **ID** | TC-<AREA>-<NNN> |
-| **Doc ref** | `<governing doc>` §<section>; rule `<rule code>` <!-- if the docs give one --> |
+| **Doc ref** | `<governing Confluence page title>` §<section>; rule `<rule code>` <!-- if the docs give one --> |
 | **Priority** | <High / Medium / Low> |
 | **Level** | <UI / API / DB> |
 
@@ -34,7 +34,7 @@ How to use this template:
 
 <!-- Concrete values, not ranges; one boundary value per case. Times relative to execution
      ("now + 24 h"), stating UTC or zone-local. Mark any value or field name not from Doc ref:
-     "(from `<doc>`)", "(from `confirmed-facts.md` #<n>)" or "(assumed)". Prefer neutral values
+     "(from `<page title>`)", "(from `confirmed-facts.md` #<n>)" or "(assumed)". Prefer neutral values
      that cannot fail an undocumented format check. -->
 
 | Item | Value |

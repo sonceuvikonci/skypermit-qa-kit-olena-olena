@@ -3,7 +3,7 @@
 | | | |
 |---|---|---|
 | **Project:** skypermit | **Site:** https://skypermit.vercel.app/ | **Owner:** IraVol |
-| **Release:** ReleaseVersion 3.15 | **Sprint:** 7 | **Sources:** `../skypermit/docs/` (data model, state machine, business rules, frontend spec) |
+| **Release:** ReleaseVersion 3.15 | **Sprint:** 7 | **Sources:** Confluence space SkyPermit Docs (`01 — Data Model`, `02 — Request Lifecycle`, `06 — Business Rules`, `04 — Frontend Scope`) |
 
 ## Introduction
 
