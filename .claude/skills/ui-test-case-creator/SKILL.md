@@ -2,7 +2,7 @@
 name: ui-test-case-creator
 model: sonnet
 allowed-tools: mcp__atlassian__getConfluencePage, mcp__atlassian__searchConfluenceUsingCql, mcp__atlassian__getPagesInConfluenceSpace
-description: Generate UI/E2E test cases (one atomic, low-level check per case, not a scenario) as Markdown files with ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification and Expected result, based on the project specs (Confluence space SkyPermit Docs). Covers only checks that work through the form and `data-testid` selectors, and applies the test-design techniques BV, EP and state transition. Use whenever the user asks for a UI test case, "тест-кейс", a TC, an E2E check, or wants to turn a UI risk, rule, boundary or test-plan item into a test, even if they don't say "test case" explicitly. Do NOT use for API test cases (a separate API test-case skill will cover them), nor for test plans or checklists of many scenarios.
+description: Generate UI/E2E test cases (one atomic, low-level check per case, not a scenario) as Markdown files with ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification and Expected result, based on the project specs (Confluence space SkyPermit Docs). Covers only checks that work through the form and `data-testid` selectors, and applies the test-design techniques BV, EP and state transition. Use whenever the user asks for a UI test case, "тест-кейс", a TC, an E2E check, or wants to turn a UI risk, rule, boundary or test-plan item into a test, even if they don't say "test case" explicitly. Do NOT use for API test cases (use api-test-case-creator), nor for test plans or checklists of many scenarios.
 ---
 
 # Test Case
