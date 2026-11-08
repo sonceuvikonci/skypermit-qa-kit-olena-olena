@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | **ID** | TC-<AREA>-<NNN> |
-| **Doc ref** | `<rules doc>` §<sections>, as corrected by `<clarifications doc>` item <n> if it applies; rule `<rule_reference>` |
+| **Doc ref** | `<rules page title>` §<sections>, as corrected by `<clarifications page title>` item <n> if it applies; rule `<rule_reference>` |
 | **Priority** | <High for gates and rule_reference> |
 | **Level** | <API: expected result is a status code and body> |
 

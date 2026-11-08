@@ -1,7 +1,8 @@
 ---
-name: test-case-creator
+name: ui-test-case-creator
 model: sonnet
-description: Generate one atomic, low-level test case (a single check, not a scenario) as a Markdown file with ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification and Expected result, based on the project specs (e.g. ../skypermit/docs/). Use whenever the user asks for a test case, "тест-кейс", a TC, a single check, or wants to turn a risk, rule, boundary or test-plan item into a test, even if they don't say "test case" explicitly. Not for test plans or checklists of many scenarios.
+allowed-tools: mcp__atlassian__getConfluencePage, mcp__atlassian__searchConfluenceUsingCql, mcp__atlassian__getPagesInConfluenceSpace
+description: Generate UI/E2E test cases (one atomic, low-level check per case, not a scenario) as Markdown files with ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification and Expected result, based on the project specs (Confluence space SkyPermit Docs). Covers only checks that work through the form and `data-testid` selectors, and applies the test-design techniques BV, EP and state transition. Use whenever the user asks for a UI test case, "тест-кейс", a TC, an E2E check, or wants to turn a UI risk, rule, boundary or test-plan item into a test, even if they don't say "test case" explicitly. Do NOT use for API test cases (a separate API test-case skill will cover them), nor for test plans or checklists of many scenarios.
 ---
 
 # Test Case
@@ -24,6 +25,16 @@ A second rule hides easily in Expected result: if the outcome contains values th
 Setup work (accounts, pilots, aircraft, requests in a given state) belongs in **Preconditions**, not Steps. Steps are only the action under test, usually 1–3 lines. Read-only calls that only observe the result go in **Verification** (see Template), so they do not count as extra steps.
 
 If the request implies several checks, do not merge them. List the candidate atomic checks (one line each) and ask which one to write, or offer to generate each as a separate case (in batch mode, see "Batch mode").
+
+## Test design techniques
+
+When a request covers a rule, field, or state model (not one named check), derive the candidate checks with these techniques. Every candidate is still **one atomic case**; the techniques decide which cases are needed, not how many checks go into one.
+
+- **BV (boundary value analysis)**: for each numeric, date/time or length limit, one case at the exact boundary and one at one unit past it (valid side and invalid side are separate cases).
+- **EP (equivalence partitioning)**: for each input, one case per valid class and one per invalid class, with one representative value each. Do not write several cases for values of the same class.
+- **State transition**: one case per allowed transition and one per forbidden transition that the spec defines (taken from the state model in `02 — Request Lifecycle`).
+
+Workflow: list the candidates (technique, condition, one line each), then write them one by one. In normal mode, show the list and write all of it unless the user narrows it. In batch mode, write only the candidate that matches the given `rule_reference` and condition (see below).
 
 ## Batch mode (called from cover-gaps)
 
@@ -50,7 +61,7 @@ Batch mode is on when the request says "Batch mode" (the `/cover-gaps` pipeline 
 
 - The user's request: a rule, field, boundary, transition, UI element, or a risk/item from a test plan in `test-plans/`.
 - When the case comes from a test-plan risk about a rule being bypassed (e.g. "registration allows choosing `authorisation_level`"), write the negative variant first, the one that tries the bypass (send `authorisation_level: "L3"`, expect `L1`). The default-value variant is weaker and comes second. Why: the risk is about the bypass, so that is the check most likely to find the defect.
-- The specs (for skypermit: `../skypermit/docs/`, read-only). Read the docs that govern the check before writing. Where docs disagree, follow the governing or corrected one (for skypermit, `07-clarifications.md` and `06-business-rules.md` override the source wording) and cite it.
+- The specs (for skypermit: Confluence space **SkyPermit Docs**, read via the Atlassian MCP tools, see CLAUDE.md; never edit Confluence). Read the pages that govern the check before writing. Where pages disagree, follow the governing or corrected one (for skypermit, `07 — Clarifications` and `06 — Business Rules` override the source wording) and cite it by page title and section.
 
 ## Confirmed facts register
 
@@ -65,7 +76,7 @@ Values not stated in the specs, confirmed by the user. Cite as `confirmed-facts.
 
 | # | Fact | Not stated in | Confirmed by | Date |
 |---|---|---|---|---|
-| 1 | `POST /api/v1/operators` returns `201` on success | `03-api-contract.md` | user | 2026-10-19 |
+| 1 | `POST /api/v1/operators` returns `201` on success | `03 — API Contract` | user | 2026-10-19 |
 ```
 
 - **Before asking** the user about an undefined value, read this file. If the fact is there, use it and cite its number; do not ask again.
@@ -103,14 +114,14 @@ Use `references/example-gate-case.md` as an example of the shape and level of de
 ### Field rules
 
 - **Title**: states the condition and the outcome, e.g. "Weight band not in zone's permitted bands fails AIRCRAFT gate".
-- **Doc ref**: the doc and section that define the expected result, plus the rule code if the docs give one (e.g. `06-business-rules.md` §1.2; rule `ZC-2026.1 §2`). Cite the governing doc, not just the one that mentions it. Cite docs that match the Level: an API case does not cite the UI spec, and a UI case cites the UI spec plus the rule doc, not the API contract alone. Also cite the doc that defines any endpoint used in Verification.
+- **Doc ref**: the Confluence page title and section that define the expected result, plus the rule code if the docs give one (e.g. `06 — Business Rules` §1.2; rule `ZC-2026.1 §2`). Cite the governing doc, not just the one that mentions it. Cite docs that match the Level: an API case does not cite the UI spec, and a UI case cites the UI spec plus the rule doc, not the API contract alone. Also cite the doc that defines any endpoint used in Verification.
 - **Priority**:
   - High: gates and `rule_reference`, illegal transitions, access control, data loss/integrity, the two frontend contracts.
   - Medium: field validation, boundaries of secondary limits, list filters and sorting.
   - Low: cosmetic or informational UI.
 - **Level**: where the check is observed. Use API when the expected result is a status code or response body; UI when it is what the user sees or a `data-testid`; DB only when neither UI nor API can show it.
 - **Preconditions**: everything needed to make the single step meaningful. Make other gates pass explicitly when testing a later gate (gates run `PILOT` → `AIRCRAFT` → `ZONE` → `TIME_WINDOW` and stop at the first failure). If a precondition needs access the product does not give (e.g. editing `certified_on` with no update endpoint, setting `authorisation_level` above `L1`), say how: "via DB" or "admin action", so the tester knows.
-- **Test data**: concrete values, not ranges. Every value must be traceable: if a field name or format does not come from the doc in Doc ref, mark where it comes from right in the Value cell: "(from `01-data-model.md`)", "(from `confirmed-facts.md` #<n>)" or "(assumed)". Prefer neutral values that are unlikely to fail an undocumented format check (e.g. digits only for an id whose format is not defined), so the case fails because of the rule, not because of the data. For boundaries, use the exact boundary value or one unit past it, one value per case. Express times relative to execution (e.g. "now + 24 h") and say whether they are UTC or zone-local.
+- **Test data**: concrete values, not ranges. Every value must be traceable: if a field name or format does not come from the doc in Doc ref, mark where it comes from right in the Value cell: "(from `01 — Data Model`)", "(from `confirmed-facts.md` #<n>)" or "(assumed)". Prefer neutral values that are unlikely to fail an undocumented format check (e.g. digits only for an id whose format is not defined), so the case fails because of the rule, not because of the data. For boundaries, use the exact boundary value or one unit past it, one value per case. Express times relative to execution (e.g. "now + 24 h") and say whether they are UTC or zone-local.
 - **Steps**: imperative, numbered, the action under test only. For UI, name the `data-testid` where the docs give one. For API, give method and path.
 - **Verification**: only read-only actions that do not change state (a `GET`, opening a page, reading a list). Use it when the step's own response does not show the expected value, e.g. the response body is undefined in the docs. Only use endpoints or pages the docs define. Never put a write action here; if one is needed, it is setup and goes in Preconditions.
 - **Observability**: the expected result must be visible at the stated Level by a documented means: the step's response, a Verification read, or the UI. If neither the API nor the UI can show it (e.g. comparing with `auth.users`), set Level to DB and say "via DB" in Verification. If nothing documented can show it, keep the value but add `Open question: how to observe <value>, source`.

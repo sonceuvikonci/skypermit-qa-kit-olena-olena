@@ -1,6 +1,7 @@
 ---
 name: test-plan
-description: Generate a concise test plan (scope, risks, strategy, entry/exit criteria, environments, tools, schedule) from a provided spec file or documentation directory. Use whenever the user asks for a test plan, "тест-план", QA plan, or test strategy based on docs, e.g. the specs in ../skypermit/docs/, even if they don't say "test plan" explicitly.
+allowed-tools: mcp__atlassian__getConfluencePage, mcp__atlassian__searchConfluenceUsingCql, mcp__atlassian__getPagesInConfluenceSpace
+description: Generate a concise test plan (scope, risks, strategy, entry/exit criteria, environments, tools, schedule) from a provided spec file or documentation directory. Use whenever the user asks for a test plan, "тест-план", QA plan, or test strategy based on docs, e.g. the specs in the Confluence space SkyPermit Docs, even if they don't say "test plan" explicitly.
 ---
 
 # Test Plan
@@ -9,7 +10,7 @@ Generate a test plan from a spec file or a docs directory.
 
 ## Inputs
 
-- A file or a directory of documentation (for skypermit: `../skypermit/docs/`, read-only).
+- A file, a directory of documentation, or Confluence pages (for skypermit: the space **SkyPermit Docs**, read via the Atlassian MCP tools, see CLAUDE.md; read-only).
 - Read every doc the plan relies on before writing, and list them in Sources.
 
 ### Single-file input
