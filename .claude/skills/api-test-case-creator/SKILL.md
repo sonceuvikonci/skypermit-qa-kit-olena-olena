@@ -3,7 +3,7 @@ name: api-test-case-creator
 model: sonnet
 argument-hint: '{"gate": "TIME_WINDOW", "rule_reference": "TSD-4 §2.1", "story": "SKY-2"}'
 allowed-tools: Read(test-cases/**), Read(../skypermit/public/openapi.yaml), Grep(test-cases/**), Glob(test-cases/**), Write(test-cases/api/**), Write(test-cases/confirmed-facts.md), mcp__atlassian__getConfluencePage, mcp__atlassian__searchConfluenceUsingCql, mcp__atlassian__getPagesInConfluenceSpace
-description: Generate API test cases for ONE business rule as Markdown files test-cases/api/API-OP-<NNN>.md, with the same fields as the UI cases (ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification, Expected result), where Steps are HTTP requests to /api/v1 (method, path, body, auth = operator session OR X-Reviewer-Id, never both) and Expected result is a status code plus, for 422, the body with failing_gate, rule_reference and message. Endpoints and codes come from Confluence `03 — API Contract`, rules from `06 — Business Rules` (as corrected by `07 — Clarifications`). Applies BV and EP as separate single checks through POST /flight-requests/{id}/validate, and state transition as end-to-end request chains (validate → GET, submit → REJECTED, repeat submit → 409) that become a Postman collection. Use when the user asks for API test cases, "API-кейси", API checks of a rule, gate, boundary or transition. Do NOT use for UI/E2E cases or anything with data-testid (use ui-test-case-creator), for building the Postman collection (api-postman-collection), for test plans (test-plan) or verifying a case (tc-verifier).
+description: Generate API test cases for ONE business rule as Markdown files test-cases/api/API-OP-<NNN>.md, with the same fields as the UI cases (ID, Doc ref, Priority, Level, Preconditions, Test data, Steps, optional Verification, Expected result), where Steps are HTTP requests to /api/v1 (method, path, body, auth = operator session OR X-Reviewer-Id, never both) and Expected result is a status code plus, for 422, the body with failing_gate, rule_reference and message. Endpoints and codes come from Confluence `03 — API Contract`, rules from `06 — Business Rules` (as corrected by `07 — Clarifications`). Applies BV and EP as separate single checks through POST /flight-requests/{id}/validate, and state transition as end-to-end request chains (validate → GET, submit → REJECTED, repeat submit → 409) that become a Postman collection. Use when the user asks for API test cases, "API-кейси", API checks of a rule, gate, boundary or transition. Do NOT use for UI/E2E cases or anything with data-testid (use ui-test-case-creator), for building the Postman collection (postman-collection-builder), for test plans (test-plan) or verifying a case (tc-verifier).
 ---
 
 # API test cases for one business rule
@@ -82,7 +82,7 @@ One case per chain, title prefixed `[ST]`. A chain exercises one transition mode
 
 Adapt it to what `02` defines for the rule (e.g. a passing chain to `UNDER_REVIEW`, or `cancel` after the deadline), but keep: one rule, one starting request, writes and reads alternating so every transition is observed by a `GET`. If `02`/`03` do not say what `submit` returns on a gate failure, write `TBD` and an `Open question:` line instead of assuming `422`.
 
-ST chains will be turned into a Postman collection by **api-postman-collection**, so:
+ST chains will be turned into a Postman collection by **postman-collection-builder**, so:
 - each Step is self-contained (method, path with `{{variables}}`, auth, body);
 - every variable a Step uses is created in a Precondition and named the same everywhere;
 - each Expected result item is assertable: status code, and exact field values where the docs define them.
@@ -124,7 +124,7 @@ Write the case in English; paths, field names, states, enum values and rule code
 
 ## Final message to the user
 
-In the user's language, 3–6 lines: the rule, the list of files written (path, technique, one-line condition), any `TBD` with a question to confirm a value (record answers in `test-cases/confirmed-facts.md`, as ui-test-case-creator does), anything the template was missing (see "Output location and ID"), and that the `[ST]` chains are ready for **api-postman-collection**.
+In the user's language, 3–6 lines: the rule, the list of files written (path, technique, one-line condition), any `TBD` with a question to confirm a value (record answers in `test-cases/confirmed-facts.md`, as ui-test-case-creator does), anything the template was missing (see "Output location and ID"), and that the `[ST]` chains are ready for **postman-collection-builder**.
 
 ## Reference
 

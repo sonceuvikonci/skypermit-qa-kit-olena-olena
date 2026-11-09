@@ -9,7 +9,7 @@
 //
 // --upsert: the `testomat-sync upsert` result ({ tests: [{ case_id, test_id }] }). Without it test_id is null.
 //
-// Case id = prefix "<ID>: " of the request name, or of the nearest parent folder (api-postman-collection
+// Case id = prefix "<ID>: " of the request name, or of the nearest parent folder (postman-collection-builder
 // names every request and folder "<case id>: ..."). Status per case:
 //   failed  - a non-"Precondition:" assertion failed, or a Step request got no response
 //   skipped - only setup failed (a "Precondition:" assertion, or a Pre request got no response);

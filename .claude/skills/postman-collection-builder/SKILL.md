@@ -1,5 +1,5 @@
 ---
-name: api-postman-collection
+name: postman-collection-builder
 description: >-
   Build a NEW Postman collection (and, if needed, a clean environment) from one or more API test cases in test-cases/ and ../skypermit/public/openapi.yaml through the Postman MCP server - precondition requests, the steps of each case, and status + response-body assertions taken from its Expected result. Every request is named "<case id>: ..." so run results map back to cases. Saves a local copy and a build report with the Postman CLI command, then stops for review. Use when the user asks to "збери колекцію", build, create or generate a Postman collection for API test cases (e.g. TC-GATE-001) or for a story key whose API cases are saved locally. Create-only: never runs, updates or deletes anything in Postman. Do NOT use to run a collection (the user runs it with Postman CLI), to write test cases (ui-test-case-creator), to verify a case (tc-verifier), or for UI cases (ui-run-playwright).
 argument-hint: "<TC id | path to test-cases/*.md> [more ids...] [collection name]"
