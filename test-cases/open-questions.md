@@ -23,3 +23,11 @@ Spec gaps found while writing test cases. Nothing here changes `../skypermit` or
 | OQ-SKY4-3 | "All active zones": should the list come from the catalogue or from `GET /zones`, which has no `active` filter? All six zones are active today, so a test cannot tell the two apart. The zone `active` citation is open in `05` row 5. | `06 — Business Rules` § 4; `05 — Open Questions` row 5 | — (кейси не створені: фічі немає в доках і в коді) |
 | OQ-SKY4-4 | The empty-zone message «Немає заявок для цієї зони»: its `data-testid` and UI language. The app shows "No requests awaiting review." (`reviewer-queue-empty`) in English. | story SKY-4 AC 5; `app/reviewer/page.tsx:60-64` | — (кейси не створені: фічі немає в доках і в коді) |
 | OQ-SKY4-5 | Initial sort direction and what each click does are not in `04`; the code starts ascending and a click makes it descending. | `04 — Frontend Scope` § Reviewer queue; `app/reviewer/page.tsx:28,46-50` | — (кейси не створені: фічі немає в доках і в коді) |
+
+## SKY-2 (2026-11-09)
+
+| # | Question | Source | Cases |
+|---|---|---|---|
+| OQ-SKY2-1 | From which moment does `validate` count lead time? `06` measures it between submission and `window_start`, and `03` says `validate` runs the gates "exactly as submit would", but `validate` is a dry run with no submission. The code uses the moment `validate` is called (`evaluatedAt: new Date()`). | `06 — Business Rules` § 1.4; `03 — API Contract` endpoint 13; `app/api/v1/flight-requests/[id]/validate/route.ts:38` | API-OP-001 |
+| OQ-SKY2-2 | `03 — API Contract` does not list the `201` success status for `POST /operators` and `POST /flight-requests`. The code returns `201` (`lib/http.ts:8-10`), and `confirmed-facts.md` #1 and #8 record it from the user and `openapi.yaml`, but the contract page itself is silent. | `03 — API Contract` § Error semantics; `lib/http.ts:8-10` | API-OP-001 |
+| OQ-SKY2-3 | The citation `ZC-2026.1 §4` for the zone `active` check is marked as not yet confirmed. The rule itself (an inactive zone rejects the request) is described. Related: OQ-SKY4-3, `05` row 5. | `06 — Business Rules` § 6; `07 — Clarifications` § 4; `05 — Open Questions` row 5 | API-OP-001 |

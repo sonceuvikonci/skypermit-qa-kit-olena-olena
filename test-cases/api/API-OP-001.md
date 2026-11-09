@@ -42,3 +42,7 @@
 ## Expected result
 
 1. Step 1 returns `422` with `failing_gate` = `TIME_WINDOW`, `rule_reference` = `TSD-4 §2.1`, `message` = non-empty string.
+
+## Note
+
+`06 — Business Rules` § 1.4 counts lead time from submission; for `validate` the code takes the moment of the call (`app/api/v1/flight-requests/[id]/validate/route.ts:38`, `evaluatedAt: new Date()`), not Pre 4. The actual lead time at Step 1 is therefore a few seconds under 5 h 59 min. The expected result does not change. Run Step 1 right after Pre 4. See OQ-SKY2-1 in `open-questions.md`.
