@@ -1,0 +1,11 @@
+{
+  "suite_id": "0d461fcb",
+  "tests": [
+    { "case_id": "API-OP-001", "test_id": "1dc01130", "action": "created" },
+    { "case_id": "API-OP-002", "test_id": "09f8def5", "action": "created" },
+    { "case_id": "API-OP-003", "test_id": "5c40c7a4", "action": "created" },
+    { "case_id": "API-OP-004", "test_id": "e719ea3c", "action": "created" },
+    { "case_id": "API-OP-005", "test_id": "15e69db3", "action": "created" }
+  ],
+  "duplicates": []
+}
