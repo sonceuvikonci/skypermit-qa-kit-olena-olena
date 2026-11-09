@@ -6,11 +6,14 @@
 // (e.g. SKY_OPERATOR_PASSWORD) and reads their values from its own environment.
 //
 // Usage:
-//   node redact.mjs redact --secrets SKY_OPERATOR_PASSWORD[,MORE] --in <raw file> --out <file>
-//   node redact.mjs check  --secrets SKY_OPERATOR_PASSWORD[,MORE] <file> [file...]
+//   node redact.mjs redact      --secrets SKY_OPERATOR_PASSWORD[,MORE] --in <raw file> --out <file>
+//   node redact.mjs redact-json --secrets SKY_OPERATOR_PASSWORD[,MORE] --in <raw report.json> --out <file>
+//   node redact.mjs check       --secrets SKY_OPERATOR_PASSWORD[,MORE] <file> [file...]
 //
 // redact: rewrites every secret value (plain, JSON-escaped, URL-encoded, base64) and every value of a
 //         secret-looking field (password, token, secret, api key, cookie, authorization, session) as ***.
+// redact-json: the same for a JSON report, done on the parsed tree (redactJson) so the output is still
+//         valid JSON with the same shape. Exit 3 if the input is not JSON.
 // check:  exit 0 if no file contains a secret value or an unmasked secret-looking field; exit 1 and list
 //         file + kind of leak (never the value) otherwise. Exit 2 on bad usage or an unset variable.
 
@@ -117,8 +120,8 @@ function parseArgs(argv) {
 
 function main() {
   const opts = parseArgs(process.argv.slice(2));
-  if (!['redact', 'check'].includes(opts.mode) || opts.secrets.length === 0) {
-    console.error('Usage: redact.mjs redact|check --secrets VAR[,VAR] (--in raw --out file | file...)');
+  if (!['redact', 'redact-json', 'check'].includes(opts.mode) || opts.secrets.length === 0) {
+    console.error('Usage: redact.mjs redact|redact-json|check --secrets VAR[,VAR] (--in raw --out file | file...)');
     process.exit(2);
   }
   let values;
@@ -129,12 +132,24 @@ function main() {
     process.exit(2);
   }
 
-  if (opts.mode === 'redact') {
+  if (opts.mode === 'redact' || opts.mode === 'redact-json') {
     if (!opts.in || !opts.out) {
-      console.error('redact needs --in and --out');
+      console.error(`${opts.mode} needs --in and --out`);
       process.exit(2);
     }
-    const clean = redactString(readFileSync(opts.in, 'utf8'), values);
+    let clean;
+    if (opts.mode === 'redact-json') {
+      let parsed;
+      try {
+        parsed = JSON.parse(readFileSync(opts.in, 'utf8'));
+      } catch (e) {
+        console.error('Input is not valid JSON; nothing written.');
+        process.exit(3);
+      }
+      clean = JSON.stringify(redactJson(parsed, values), null, 2) + '\n';
+    } else {
+      clean = redactString(readFileSync(opts.in, 'utf8'), values);
+    }
     const leaks = findLeaks(clean, values);
     if (leaks.length) {
       console.error(`Not written: still contains ${leaks.join(', ')}`);

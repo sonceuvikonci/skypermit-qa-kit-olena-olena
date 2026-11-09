@@ -1,0 +1,83 @@
+Running your collection...
+postman
+
+SKY-2 · API-OP-005 Lead time under 6 h chain
+
+Folder API-OP-005: [ST] Lead time under 6 h: validate keeps DRAFT, submit rejects, resubmit is 409
+Sub-folder API-OP-005: Pre 01 Register operator
+
+  POST https://skypermit.vercel.app/api/v1/operators [201 Created, 3.49 KB, 3.6 s]
+  Pass  Precondition: operator registered (201)
+
+Sub-folder API-OP-005: Pre 02 Create pilot (R_BASIC, certified 1 month ago)
+
+  POST https://skypermit.vercel.app/api/v1/pilots [201 Created, 691 B, 1041 ms]
+  Pass  Precondition: pilot created (201)
+
+Sub-folder API-OP-005: Pre 03 Create aircraft (500 g, C0)
+
+  POST https://skypermit.vercel.app/api/v1/aircraft [201 Created, 709 B, 821 ms]
+  Pass  Precondition: aircraft created (201)
+
+Sub-folder API-OP-005: Pre 04 Create flight request (start in 2 h, 60 min)
+
+  POST https://skypermit.vercel.app/api/v1/flight-requests [201 Created, 993 B, 1220 ms]
+  Pass  Precondition: flight request created (201)
+  Pass  Precondition: flight request is in DRAFT
+
+Sub-folder API-OP-005: Step 1 Validate -> 422 TIME_WINDOW
+
+  POST https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c/validate [422 Unprocessable Entity, 525 B, 1141 ms]
+  Pass  Expected 1: returns 422
+  Pass  Expected 1: failing_gate = TIME_WINDOW
+  Pass  Expected 1: rule_reference = TSD-4 §2.1
+  Pass  Expected 1: message is a non-empty string
+
+Sub-folder API-OP-005: Step 2 GET -> still DRAFT
+
+  GET https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c [200 OK, 779 B, 569 ms]
+  Pass  Expected 2: returns 200
+  Pass  Expected 2: state = DRAFT
+
+Sub-folder API-OP-005: Step 3 Submit -> 422 TIME_WINDOW
+
+  POST https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c/submit [422 Unprocessable Entity, 523 B, 1301 ms]
+  Pass  Expected 3: returns 422
+  Pass  Expected 3: failing_gate = TIME_WINDOW
+  Pass  Expected 3: rule_reference = TSD-4 §2.1
+  Pass  Expected 3: message is a non-empty string
+
+Sub-folder API-OP-005: Step 4 GET -> REJECTED
+
+  GET https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c [200 OK, 851 B, 570 ms]
+  Pass  Expected 4: returns 200
+  Pass  Expected 4: state = REJECTED
+
+Sub-folder API-OP-005: Step 5 Resubmit -> 409
+
+  POST https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c/submit [409 Conflict, 457 B, 561 ms]
+  Pass  Expected 5: returns 409
+  Pass  Expected 5: error is a non-empty string
+Generating run report [json]...
+Saving run report [json]...
+Report created successfully! Saved to: C:\Users\Lena\AppData\Local\Temp\claude\c49479dcb5c62896\56f85de7-2392-46f5-a2b6-f03c7cce97f3\scratchpad\sky-2---api-op-005-lead-time-under-6-h-chain-2026-11-09-1217\report.json
+
+--------------------------------------------------------------------------
+|                         |              executed |               failed |
+--------------------------+-----------------------+-----------------------
+|              iterations |                     1 |                    0 |
+--------------------------+-----------------------+-----------------------
+|                requests |                     9 |                    0 |
+--------------------------+-----------------------+-----------------------
+|            test-scripts |                     9 |                    0 |
+--------------------------+-----------------------+-----------------------
+|      prerequest-scripts |                     9 |                    0 |
+--------------------------+-----------------------+-----------------------
+|              assertions |                    19 |                    0 |
+--------------------------------------------------------------------------
+| total run duration: 11.5 s                                             |
+--------------------------------------------------------------------------
+| total data received: 2.71 KB (approx)                                  |
+--------------------------------------------------------------------------
+| average response time: 1204 ms [min: 561 ms, max: 3.6 s, s.d.: 896 ms] |
+--------------------------------------------------------------------------

@@ -1,0 +1,232 @@
+{
+  "info": {
+    "name": "SKY-2 · TC-GATE-001 lead time under 6 h",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Built by the api-postman-collection skill from test-cases/gates/TC-GATE-001.md.\n\nSources: 06 — Business Rules § 1.4 (TSD-4 §2.1: lead time >= 6 h), § 6 (rule_reference), § 1.1–§ 4 (pilot, aircraft, zone data); 03 — API Contract § The 422 body, § Authentication & authorisation (L1 at registration, session cookie); openapi.yaml POST /operators, /pilots, /aircraft, /flight-requests, /flight-requests/{id}/submit.\n\nSecrets: pass operatorPassword at run time with --env-var. Nothing secret is stored in this collection."
+  },
+  "variable": [
+    { "key": "operatorEmail", "value": "", "description": "Generated in Pre 01" },
+    { "key": "operatorNationalId", "value": "", "description": "Generated in Pre 01" },
+    { "key": "pilotNationalId", "value": "", "description": "Generated in Pre 02" },
+    { "key": "certifiedOn", "value": "", "description": "Today minus 1 month, computed in Pre 02" },
+    { "key": "serialNumber", "value": "", "description": "Generated in Pre 03" },
+    { "key": "windowStart", "value": "", "description": "Now + 5 h 59 min, UTC, computed in Pre 04" },
+    { "key": "windowEnd", "value": "", "description": "windowStart + 60 min, computed in Pre 04" },
+    { "key": "operatorId", "value": "" },
+    { "key": "pilotId", "value": "" },
+    { "key": "aircraftId", "value": "" },
+    { "key": "flightRequestId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "TC-GATE-001: Lead time shorter than 6 hours fails TIME_WINDOW gate",
+      "item": [
+        {
+          "name": "TC-GATE-001: Pre 01 Register operator (L1)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pwd = pm.environment.get('operatorPassword');",
+                  "if (!pwd || String(pwd).length < 8) {",
+                  "  throw new Error('Pass operatorPassword (min 8 chars) with --env-var \"operatorPassword=$SKY_OPERATOR_PASSWORD\".');",
+                  "}",
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('operatorEmail', `tc-gate-001.${ts}@example.test`);",
+                  "pm.collectionVariables.set('operatorNationalId', `TCG001-${ts}`);",
+                  "pm.collectionVariables.set('operatorId', '');",
+                  "pm.collectionVariables.set('pilotId', '');",
+                  "pm.collectionVariables.set('aircraftId', '');",
+                  "pm.collectionVariables.set('flightRequestId', '');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: operator registered (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: operator authorisation_level is L1', () => pm.expect(body.authorisation_level).to.eql('L1'));",
+                  "if (pm.response.code === 201 && body.id) pm.collectionVariables.set('operatorId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/operators",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{operatorEmail}}\",\n  \"password\": \"{{operatorPassword}}\",\n  \"legal_name\": \"TC-GATE-001 Operator\",\n  \"national_id\": \"{{operatorNationalId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Precondition 1: an operator is registered and logged in (session cookie). Registration always creates L1 (03 — API Contract § Authentication & authorisation)."
+          }
+        },
+        {
+          "name": "TC-GATE-001: Pre 02 Create pilot (R_BASIC, certified 1 month ago)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('operatorId')) { pm.execution.skipRequest(); return; }",
+                  "const d = new Date();",
+                  "d.setUTCMonth(d.getUTCMonth() - 1);",
+                  "pm.collectionVariables.set('certifiedOn', d.toISOString().slice(0, 10));",
+                  "pm.collectionVariables.set('pilotNationalId', `TCG001-P-${Date.now()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: pilot created (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: pilot rating is R_BASIC', () => pm.expect(body.rating).to.eql('R_BASIC'));",
+                  "if (pm.response.code === 201 && body.id) pm.collectionVariables.set('pilotId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/pilots",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"TC-GATE-001 Pilot\",\n  \"national_id\": \"{{pilotNationalId}}\",\n  \"rating\": \"R_BASIC\",\n  \"certified_on\": \"{{certifiedOn}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Precondition 2: PILOT gate passes — OPEN zone accepts any rating, certification current for 18 months (06 — Business Rules § 1.1, § 2)."
+          }
+        },
+        {
+          "name": "TC-GATE-001: Pre 03 Create aircraft (500 g, C0)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('operatorId')) { pm.execution.skipRequest(); return; }",
+                  "pm.collectionVariables.set('serialNumber', `TCG001-SN-${Date.now()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: aircraft created (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: aircraft mtom_grams is 500', () => pm.expect(body.mtom_grams).to.eql(500));",
+                  "if (pm.response.code === 201 && body.id) pm.collectionVariables.set('aircraftId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/aircraft",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manufacturer\": \"QA\",\n  \"model\": \"TC-GATE-001\",\n  \"serial_number\": \"{{serialNumber}}\",\n  \"mtom_grams\": 500\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Precondition 3: AIRCRAFT gate passes — 500 g is C0, DNI-OPN-1 permits C0–C3 (06 — Business Rules § 3, § 4)."
+          }
+        },
+        {
+          "name": "TC-GATE-001: Pre 04 Create flight request in DRAFT (start in 5 h 59 min)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('pilotId') || !pm.collectionVariables.get('aircraftId')) { pm.execution.skipRequest(); return; }",
+                  "// Test data: window_start = now + 5 h 59 min (UTC, rounded down to the minute), window_end = +60 min.",
+                  "const start = new Date(Date.now() + (5 * 60 + 59) * 60 * 1000);",
+                  "start.setUTCSeconds(0, 0);",
+                  "const end = new Date(start.getTime() + 60 * 60 * 1000);",
+                  "pm.collectionVariables.set('windowStart', start.toISOString());",
+                  "pm.collectionVariables.set('windowEnd', end.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: flight request created (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: flight request is in DRAFT', () => pm.expect(body.state).to.eql('DRAFT'));",
+                  "if (pm.response.code === 201 && body.id) pm.collectionVariables.set('flightRequestId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/flight-requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pilot_id\": \"{{pilotId}}\",\n  \"aircraft_id\": \"{{aircraftId}}\",\n  \"zone_code\": \"DNI-OPN-1\",\n  \"window_start\": \"{{windowStart}}\",\n  \"window_end\": \"{{windowEnd}}\",\n  \"requested_altitude_metres\": 50,\n  \"flight_purpose\": \"QA lead time check\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Preconditions 4–5: DRAFT request with Test data; ZONE gate passes (50 m < 120 m ceiling, L1 meets L1, zone active); no curfew in DNI-OPN-1, no other request for this aircraft."
+          }
+        },
+        {
+          "name": "TC-GATE-001: Step 1 Submit — expect 422 TIME_WINDOW",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('flightRequestId')) { pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Step 1 returns 422', () => pm.response.to.have.status(422));",
+                  "pm.test('failing_gate = TIME_WINDOW', () => pm.expect(body.failing_gate).to.eql('TIME_WINDOW'));",
+                  "pm.test('rule_reference = TSD-4 §2.1', () => pm.expect(body.rule_reference).to.eql('TSD-4 §2.1'));",
+                  "pm.test('message is a non-empty string (GateFailure schema)', () => {",
+                  "  pm.expect(body.message).to.be.a('string');",
+                  "  pm.expect(body.message.trim()).to.not.equal('');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/flight-requests/{{flightRequestId}}/submit",
+            "description": "Step 1: submit the DRAFT request with the owning operator's session. Expected: 422, failing_gate TIME_WINDOW, rule_reference TSD-4 §2.1 (06 — Business Rules § 1.4, § 6; 03 — API Contract § The 422 body)."
+          }
+        }
+      ]
+    }
+  ]
+}

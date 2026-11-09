@@ -1,0 +1,133 @@
+{
+  "run_id": null,
+  "results": [
+    {
+      "case_id": "API-OP-005",
+      "test_id": null,
+      "status": "passed",
+      "message": null
+    }
+  ],
+  "requests": [
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Pre 01 Register operator",
+      "method": "POST",
+      "url": "https://skypermit.vercel.app/api/v1/operators",
+      "status": "201 Created",
+      "request_error": null,
+      "assertions_total": 1,
+      "assertions_failed": []
+    },
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Pre 02 Create pilot (R_BASIC, certified 1 month ago)",
+      "method": "POST",
+      "url": "https://skypermit.vercel.app/api/v1/pilots",
+      "status": "201 Created",
+      "request_error": null,
+      "assertions_total": 1,
+      "assertions_failed": []
+    },
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Pre 03 Create aircraft (500 g, C0)",
+      "method": "POST",
+      "url": "https://skypermit.vercel.app/api/v1/aircraft",
+      "status": "201 Created",
+      "request_error": null,
+      "assertions_total": 1,
+      "assertions_failed": []
+    },
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Pre 04 Create flight request (start in 2 h, 60 min)",
+      "method": "POST",
+      "url": "https://skypermit.vercel.app/api/v1/flight-requests",
+      "status": "201 Created",
+      "request_error": null,
+      "assertions_total": 2,
+      "assertions_failed": []
+    },
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Step 1 Validate -> 422 TIME_WINDOW",
+      "method": "POST",
+      "url": "https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c/validate",
+      "status": "422 Unprocessable Entity",
+      "request_error": null,
+      "assertions_total": 4,
+      "assertions_failed": []
+    },
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Step 2 GET -> still DRAFT",
+      "method": "GET",
+      "url": "https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c",
+      "status": "200 OK",
+      "request_error": null,
+      "assertions_total": 2,
+      "assertions_failed": []
+    },
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Step 3 Submit -> 422 TIME_WINDOW",
+      "method": "POST",
+      "url": "https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c/submit",
+      "status": "422 Unprocessable Entity",
+      "request_error": null,
+      "assertions_total": 4,
+      "assertions_failed": []
+    },
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Step 4 GET -> REJECTED",
+      "method": "GET",
+      "url": "https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c",
+      "status": "200 OK",
+      "request_error": null,
+      "assertions_total": 2,
+      "assertions_failed": []
+    },
+    {
+      "case_id": "API-OP-005",
+      "name": "API-OP-005: Step 5 Resubmit -> 409",
+      "method": "POST",
+      "url": "https://skypermit.vercel.app/api/v1/flight-requests/fc601117-7b55-4e6e-9256-6a1d7f697e9c/submit",
+      "status": "409 Conflict",
+      "request_error": null,
+      "assertions_total": 2,
+      "assertions_failed": []
+    }
+  ],
+  "stats": {
+    "iterations": {
+      "executed": 1,
+      "errors": 0
+    },
+    "executedRequests": {
+      "executed": 9,
+      "errors": 0
+    },
+    "prerequestScripts": {
+      "executed": 9,
+      "errors": 0
+    },
+    "postresponseScripts": {
+      "executed": 9,
+      "errors": 0
+    },
+    "tests": {
+      "executed": 19,
+      "failed": 0,
+      "passed": 19,
+      "skipped": 0
+    },
+    "timeStats": {
+      "responseAverage": 1204.5555555555557,
+      "responseMin": 561,
+      "responseMax": 3617,
+      "responseStandardDeviation": 896.1701365144049
+    }
+  }
+}

@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// Turns the raw Postman CLI JSON report (-r cli,json --reporter-json-export) into a small, redacted
-// summary: one row per request and one pass/fail result per test case, ready for `testomat-sync report`.
-// Request/response bodies, headers, cookies and environment values are NOT copied to the output.
+// Turns the Postman CLI JSON report (-r cli,json --reporter-json-export), ALREADY REDACTED by
+// `redact.mjs redact-json`, into a small summary: one row per request and one pass/fail result per test
+// case, ready for `testomat-sync report`. It never reads the raw report. Request/response bodies, headers,
+// cookies and environment values are NOT copied to the output; --secrets is used for a final leak check.
 //
 // Usage:
-//   node summarize.mjs --report <raw report.json> --secrets VAR[,VAR] --out <results.json> [--upsert <upsert.json>]
+//   node summarize.mjs --report <report.redacted.json> --secrets VAR[,VAR] --out <results.json> [--upsert <upsert.json>]
 //
 // --upsert: the `testomat-sync upsert` result ({ tests: [{ case_id, test_id }] }). Without it test_id is null.
 //
@@ -15,7 +16,8 @@
 //             testomat-sync has no "blocked", so skipped + message "Blocked: setup failed ..."
 //   skipped - nothing failed but no Step request was executed
 //   passed  - everything else
-// Exit 3 if the report is not in the expected shape (do not guess results then).
+// Exit 3 if the report is not in the expected shape (no executions, or executions without a request name
+// or HTTP method): nothing is written, and results must NOT be built by hand.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { secretValues, redactString, findLeaks } from './redact.mjs';
@@ -71,10 +73,61 @@ function main() {
   const values = secretValues(o.secrets.split(','));
   const raw = JSON.parse(readFileSync(o.report, 'utf8'));
   const executions = raw?.run?.executions;
-  if (!Array.isArray(executions)) {
-    console.error('Unexpected report shape: run.executions not found. Read the redacted CLI log instead; do not guess results.');
+  const stop = (why) => {
+    console.error(`Unexpected report shape: ${why}. Nothing written; do not build results by hand.`);
     process.exit(3);
-  }
+  };
+  if (!Array.isArray(executions) || executions.length === 0) stop('run.executions not found or empty');
+
+  const names = ancestry(raw.collection);
+  const red = (s) => (s == null ? s : redactString(String(s), values));
+
+  // Normalize one execution into { name, chain, method, url, response, assertions[], errors[] }.
+  // Two known shapes:
+  //   newman-style:   ex.item.name, ex.request.{method,url}, ex.assertions[{assertion, error?, skipped?}], ex.requestError
+  //   Postman CLI 1.87.0 (-r json): ex.requestExecuted.{name,method,url}, ex.tests[{name, status}], ex.errors[]
+  // Anything else -> null (unknown shape).
+  const firstText = (...xs) => xs.find((x) => typeof x === 'string' && x.trim()) || null;
+  const normalize = (ex) => {
+    if (ex?.item?.name && ex?.request?.method) {
+      return {
+        name: ex.item.name,
+        chain: names.get(ex.item.id) || [ex.item.name],
+        method: ex.request.method,
+        url: urlToString(ex.request.url),
+        response: ex.response || null,
+        assertions: (ex.assertions || []).map((a) => ({
+          name: a.assertion,
+          outcome: a.skipped ? 'skipped' : a.error ? 'failed' : 'passed',
+          error: a.error ? firstText(a.error.message, a.error.name) : null,
+        })),
+        errors: ex.requestError ? [firstText(ex.requestError.message, ex.requestError.code) || 'request error'] : [],
+      };
+    }
+    const rq = ex?.requestExecuted;
+    if (rq?.name && rq?.method && Array.isArray(ex.tests)) {
+      return {
+        name: rq.name,
+        chain: [rq.name],
+        method: rq.method,
+        url: urlToString(rq.url),
+        response: ex.response || null,
+        assertions: ex.tests.map((t) => ({
+          name: t.name,
+          outcome: t.status,
+          error: t.status === 'failed' ? firstText(t.error?.message, t.error, t.message, t.errorMessage) || 'failed' : null,
+        })),
+        errors: (ex.errors || []).map((e) => firstText(e?.message, e?.name, typeof e === 'string' ? e : null) || 'error'),
+      };
+    }
+    return null;
+  };
+
+  const normalized = executions.map(normalize);
+  const unreadable = normalized.filter((n) => !n).length;
+  if (unreadable) stop(`${unreadable} of ${executions.length} executions match neither the newman nor the CLI 1.87.0 shape (no request name / HTTP method)`);
+  const badOutcome = normalized.flatMap((n) => n.assertions).find((a) => !['passed', 'failed', 'skipped'].includes(a.outcome));
+  if (badOutcome) stop(`unknown test status "${badOutcome.outcome}"`);
 
   const testIds = new Map();
   if (o.upsert) {
@@ -82,25 +135,20 @@ function main() {
     for (const t of up.tests || []) if (t.case_id && t.test_id) testIds.set(t.case_id, t.test_id);
   }
 
-  const names = ancestry(raw.collection);
-  const red = (s) => (s == null ? s : redactString(String(s), values));
-
-  const requests = executions.map((ex) => {
-    const chain = names.get(ex.item?.id) || [ex.item?.name];
-    const failed = (ex.assertions || [])
-      .filter((a) => a.error && !a.skipped)
-      .map((a) => ({ assertion: red(a.assertion), error: red(a.error.message || a.error.name || 'failed') }));
-    return {
-      case_id: caseIdOf(chain),
-      name: red(ex.item?.name),
-      method: ex.request?.method || null,
-      url: red(urlToString(ex.request?.url)),
-      status: ex.response ? `${ex.response.code} ${ex.response.status || ''}`.trim() : null,
-      request_error: ex.requestError ? red(ex.requestError.message || ex.requestError.code || 'request error') : null,
-      assertions_total: (ex.assertions || []).length,
-      assertions_failed: failed,
-    };
-  });
+  const requests = normalized.map((n) => ({
+    case_id: caseIdOf(n.chain),
+    name: red(n.name),
+    method: n.method,
+    url: red(n.url),
+    status: n.response && n.response.code != null ? `${n.response.code} ${n.response.status || ''}`.trim() : null,
+    request_error: n.errors.length ? red(n.errors.join('; ')) : null,
+    assertions_total: n.assertions.length,
+    assertions_failed: n.assertions
+      .filter((a) => a.outcome === 'failed')
+      .map((a) => ({ assertion: red(a.name), error: red(a.error) })),
+  }));
+  const noCase = requests.filter((r) => !r.case_id).length;
+  if (noCase) stop(`${noCase} request names have no "<case id>: " prefix, so results cannot be mapped to cases`);
 
   const byCase = new Map();
   for (const r of requests) {
@@ -145,7 +193,7 @@ function main() {
     run_id: null,
     results,
     requests,
-    stats: raw.run?.stats ?? null,
+    stats: raw.run?.stats ?? raw.run?.summary ?? null,
   };
   const text = JSON.stringify(out, null, 2) + '\n';
   const leaks = findLeaks(text, values);

@@ -55,7 +55,7 @@ Time windows are computed in the pre-request script of the request that **create
 3. `getWorkspaces` → workspace `SkyPermit`; `getCollections` (fallback `getWorkspace`) and `getEnvironments` there.
 4. Build the collection JSON (v2.1) per the design above. Write it to `postman/<ISSUE-KEY>/<FILE-ID>.postman_collection.json` first, then `createCollection` with the same content. If `createCollection` returns an error or times out, check with `getCollections`/`getWorkspace` before trying again: never create a second copy.
 5. Reuse a clean environment or `createEnvironment`.
-6. Write the report (below) and reply with: collection name and uid, environment name and uid, the requests with their assertions, warnings, open questions, and the run command. **Stop here** and wait for the user's review; do not run anything and do not offer to run it yourself.
+6. Write the report (below) and reply with: collection name and uid, environment name and uid, the requests with their assertions, warnings, open questions, and the run command. **Write this final reply in Ukrainian** (names, uids, paths, request names, assertion names and commands stay as they are; the report file itself stays in English). **Stop here** and wait for the user's review; do not run anything and do not offer to run it yourself.
 
 ## Report
 
@@ -100,20 +100,22 @@ Skipped cases: <id — reason; or none>
 
 ## How to run (Postman CLI)
 
-Secrets come from environment variables of the shell, never from the command text itself:
+Run the **local copy** with a **logged-out** Postman CLI (`postman whoami` shows no account, `POSTMAN_API_KEY` not set) and from a folder outside the repo. A run by cloud uid, or any run while logged in, is uploaded to Postman Cloud with request bodies; `--no-report-events` does not stop that (CLI 1.87.0). Non-secret environment values (`baseUrl`) go in with `--env-var` instead of `-e`. Secrets come from environment variables of the shell, never from the command text itself. The usual way is the `postman-cli-run` skill, which checks all of this before it runs.
 
 ```bash
-# bash
+# bash (from a folder outside the repo)
 export SKY_OPERATOR_PASSWORD='...'   # min 8 chars
-postman collection run <collection uid> -e <environment uid> \
-  --env-var "operatorPassword=$SKY_OPERATOR_PASSWORD"
+postman collection run "<absolute path>/postman/<ISSUE-KEY>/<FILE-ID>.postman_collection.json" \
+  --env-var "baseUrl=<baseUrl of the environment>" \
+  --env-var "operatorPassword=$SKY_OPERATOR_PASSWORD" \
+  --no-report-events
 ```
 
 ```powershell
-# PowerShell
+# PowerShell (from a folder outside the repo)
 $env:SKY_OPERATOR_PASSWORD = '...'   # min 8 chars
-postman collection run <collection uid> -e <environment uid> --env-var "operatorPassword=$env:SKY_OPERATOR_PASSWORD"
+postman collection run "<absolute path>\postman\<ISSUE-KEY>\<FILE-ID>.postman_collection.json" --env-var "baseUrl=<baseUrl of the environment>" --env-var "operatorPassword=$env:SKY_OPERATOR_PASSWORD" --no-report-events
 ```
 
-Pass one `--env-var "<name>=<value>"` per secret variable of the environment.
+Pass one `--env-var "<name>=<value>"` per non-secret variable and per secret variable of the environment.
 ````
