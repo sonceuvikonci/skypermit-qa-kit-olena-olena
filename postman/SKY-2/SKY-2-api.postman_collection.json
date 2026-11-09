@@ -1,0 +1,1794 @@
+{
+  "info": {
+    "name": "SKY-2 · API cases",
+    "description": "Built from test-cases/api/API-OP-001..005.md (SKY-2, rule 06 — Business Rules § 1.4, TSD-4 §2.1). One folder per case; each folder registers its own operator, pilot, aircraft and flight request. Variables are prefixed per case (op001_ ... op005_).\nSources: 06 — Business Rules § 1.4, § 4, § 6; 03 — API Contract § Flight requests, § Error semantics, § The 422 body; 02 — Request Lifecycle; openapi.yaml.\nRun the local copy with a logged-out Postman CLI; pass baseUrl and operatorPassword with --env-var.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "API-OP-001: Lead time 5 h 59 min (one minute under the 6 h minimum) fails TIME_WINDOW gate on validate",
+      "item": [
+        {
+          "name": "API-OP-001: Pre 01 Register operator",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pwd = pm.variables.get('operatorPassword');",
+                  "if (!pwd || String(pwd).length < 8) { throw new Error('Pass operatorPassword (min 8 chars) with --env-var \"operatorPassword=...\"'); }",
+                  "['operatorId', 'pilotId', 'aircraftId', 'flightRequestId'].forEach((k) => pm.collectionVariables.set('op001_' + k, ''));",
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('op001_operatorEmail', 'api-op-001-' + ts + '@example.test');",
+                  "pm.collectionVariables.set('op001_operatorNationalId', '1' + ts);",
+                  "pm.collectionVariables.set('op001_pilotNationalId', '2' + ts);",
+                  "pm.collectionVariables.set('op001_aircraftSerial', 'SN' + ts);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: operator registered (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op001_operatorId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operators",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operators"
+              ]
+            },
+            "description": "Precondition 1. Registers a fresh operator (L1) and signs in; the session cookie is reused by the later requests of this run.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legal_name\": \"QA Operator 001\",\n  \"national_id\": \"{{op001_operatorNationalId}}\",\n  \"email\": \"{{op001_operatorEmail}}\",\n  \"phone\": \"380000000001\",\n  \"address_line\": \"Test Street 1\",\n  \"city\": \"Kyiv\",\n  \"postal_code\": \"01001\",\n  \"password\": \"{{operatorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-001: Pre 02 Create pilot (R_BASIC, certified 1 month ago)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op001_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const d = new Date();",
+                  "d.setUTCMonth(d.getUTCMonth() - 1);",
+                  "pm.collectionVariables.set('op001_certifiedOn', d.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: pilot created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op001_pilotId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pilots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pilots"
+              ]
+            },
+            "description": "Precondition 2. PILOT gate passes: R_BASIC covers OPEN; certification current (18 months).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"QA Pilot 001\",\n  \"national_id\": \"{{op001_pilotNationalId}}\",\n  \"rating\": \"R_BASIC\",\n  \"certified_on\": \"{{op001_certifiedOn}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-001: Pre 03 Create aircraft (500 g, C0)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op001_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: aircraft created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op001_aircraftId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/aircraft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "aircraft"
+              ]
+            },
+            "description": "Precondition 3. mtom_grams = 500 -> band C0; AIRCRAFT gate passes for DNI-OPN-1 (C0-C3).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manufacturer\": \"TestMaker\",\n  \"model\": \"T-1\",\n  \"serial_number\": \"{{op001_aircraftSerial}}\",\n  \"mtom_grams\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-001: Pre 04 Create flight request (start in 5 h 59 min, 60 min)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op001_pilotId', 'op001_aircraftId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const MIN = 60 * 1000;",
+                  "// Negative case: round DOWN to the minute; it only shortens the lead time, which stays under 6 h.",
+                  "const start = Math.floor(Date.now() / MIN) * MIN + 359 * MIN;",
+                  "const iso = (ms) => new Date(ms).toISOString().replace(/\\.\\d{3}Z$/, 'Z');",
+                  "pm.collectionVariables.set('op001_windowStart', iso(start));",
+                  "pm.collectionVariables.set('op001_windowEnd', iso(start + 60 * MIN));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: flight request created (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: flight request is in DRAFT', () => pm.expect(body.state).to.eql('DRAFT'));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op001_flightRequestId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests"
+              ]
+            },
+            "description": "Precondition 4. window_start = now (UTC, floored to the minute) + 5 h 59 min; window_end = window_start + 60 min. Zone DNI-OPN-1 (no curfew), altitude 50 m.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pilot_id\": \"{{op001_pilotId}}\",\n  \"aircraft_id\": \"{{op001_aircraftId}}\",\n  \"zone_code\": \"DNI-OPN-1\",\n  \"window_start\": \"{{op001_windowStart}}\",\n  \"window_end\": \"{{op001_windowEnd}}\",\n  \"requested_altitude_metres\": 50,\n  \"flight_purpose\": \"QA lead time check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-001: Step 1 Validate -> 422 TIME_WINDOW",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op001_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 1: returns 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Expected 1: failing_gate = TIME_WINDOW', () => pm.expect(body.failing_gate).to.eql('TIME_WINDOW'));",
+                  "pm.test('Expected 1: rule_reference = TSD-4 §2.1', () => pm.expect(body.rule_reference).to.eql('TSD-4 §2.1'));",
+                  "pm.test('Expected 1: message is a non-empty string', () => { pm.expect(body.message).to.be.a('string'); pm.expect(body.message.trim()).to.not.eql(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op001_flightRequestId}}/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op001_flightRequestId}}",
+                "validate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-OP-002: Lead time 6 h 01 min (one minute over the 6 h minimum) passes TIME_WINDOW gate on validate",
+      "item": [
+        {
+          "name": "API-OP-002: Pre 01 Register operator",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pwd = pm.variables.get('operatorPassword');",
+                  "if (!pwd || String(pwd).length < 8) { throw new Error('Pass operatorPassword (min 8 chars) with --env-var \"operatorPassword=...\"'); }",
+                  "['operatorId', 'pilotId', 'aircraftId', 'flightRequestId'].forEach((k) => pm.collectionVariables.set('op002_' + k, ''));",
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('op002_operatorEmail', 'api-op-002-' + ts + '@example.test');",
+                  "pm.collectionVariables.set('op002_operatorNationalId', '1' + ts);",
+                  "pm.collectionVariables.set('op002_pilotNationalId', '2' + ts);",
+                  "pm.collectionVariables.set('op002_aircraftSerial', 'SN' + ts);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: operator registered (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op002_operatorId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operators",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operators"
+              ]
+            },
+            "description": "Precondition 1. Registers a fresh operator (L1) and signs in; the session cookie is reused by the later requests of this run.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legal_name\": \"QA Operator 002\",\n  \"national_id\": \"{{op002_operatorNationalId}}\",\n  \"email\": \"{{op002_operatorEmail}}\",\n  \"phone\": \"380000000002\",\n  \"address_line\": \"Test Street 2\",\n  \"city\": \"Kyiv\",\n  \"postal_code\": \"01001\",\n  \"password\": \"{{operatorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-002: Pre 02 Create pilot (R_BASIC, certified 1 month ago)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op002_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const d = new Date();",
+                  "d.setUTCMonth(d.getUTCMonth() - 1);",
+                  "pm.collectionVariables.set('op002_certifiedOn', d.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: pilot created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op002_pilotId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pilots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pilots"
+              ]
+            },
+            "description": "Precondition 2. PILOT gate passes: R_BASIC covers OPEN; certification current (18 months).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"QA Pilot 002\",\n  \"national_id\": \"{{op002_pilotNationalId}}\",\n  \"rating\": \"R_BASIC\",\n  \"certified_on\": \"{{op002_certifiedOn}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-002: Pre 03 Create aircraft (500 g, C0)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op002_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: aircraft created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op002_aircraftId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/aircraft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "aircraft"
+              ]
+            },
+            "description": "Precondition 3. mtom_grams = 500 -> band C0; AIRCRAFT gate passes for DNI-OPN-1 (C0-C3).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manufacturer\": \"TestMaker\",\n  \"model\": \"T-1\",\n  \"serial_number\": \"{{op002_aircraftSerial}}\",\n  \"mtom_grams\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-002: Pre 04 Create flight request (start in 6 h 01 min, 60 min)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op002_pilotId', 'op002_aircraftId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const MIN = 60 * 1000;",
+                  "// Positive case: round UP to the minute so rounding never shortens the lead time.",
+                  "const start = Math.ceil(Date.now() / MIN) * MIN + 361 * MIN;",
+                  "const iso = (ms) => new Date(ms).toISOString().replace(/\\.\\d{3}Z$/, 'Z');",
+                  "pm.collectionVariables.set('op002_windowStart', iso(start));",
+                  "pm.collectionVariables.set('op002_windowEnd', iso(start + 60 * MIN));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: flight request created (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: flight request is in DRAFT', () => pm.expect(body.state).to.eql('DRAFT'));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op002_flightRequestId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests"
+              ]
+            },
+            "description": "Precondition 4. window_start = now (UTC, rounded up to the minute) + 6 h 01 min; window_end = window_start + 60 min. Zone DNI-OPN-1 (no curfew), altitude 50 m.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pilot_id\": \"{{op002_pilotId}}\",\n  \"aircraft_id\": \"{{op002_aircraftId}}\",\n  \"zone_code\": \"DNI-OPN-1\",\n  \"window_start\": \"{{op002_windowStart}}\",\n  \"window_end\": \"{{op002_windowEnd}}\",\n  \"requested_altitude_metres\": 50,\n  \"flight_purpose\": \"QA lead time check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-002: Step 1 Validate -> 200 ok",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op002_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 1: returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Expected 1: body ok = true', () => pm.expect(body.ok).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op002_flightRequestId}}/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op002_flightRequestId}}",
+                "validate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-OP-003: Lead time 2 h (class \"under 6 h\") fails TIME_WINDOW gate on validate",
+      "item": [
+        {
+          "name": "API-OP-003: Pre 01 Register operator",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pwd = pm.variables.get('operatorPassword');",
+                  "if (!pwd || String(pwd).length < 8) { throw new Error('Pass operatorPassword (min 8 chars) with --env-var \"operatorPassword=...\"'); }",
+                  "['operatorId', 'pilotId', 'aircraftId', 'flightRequestId'].forEach((k) => pm.collectionVariables.set('op003_' + k, ''));",
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('op003_operatorEmail', 'api-op-003-' + ts + '@example.test');",
+                  "pm.collectionVariables.set('op003_operatorNationalId', '1' + ts);",
+                  "pm.collectionVariables.set('op003_pilotNationalId', '2' + ts);",
+                  "pm.collectionVariables.set('op003_aircraftSerial', 'SN' + ts);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: operator registered (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op003_operatorId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operators",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operators"
+              ]
+            },
+            "description": "Precondition 1. Registers a fresh operator (L1) and signs in; the session cookie is reused by the later requests of this run.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legal_name\": \"QA Operator 003\",\n  \"national_id\": \"{{op003_operatorNationalId}}\",\n  \"email\": \"{{op003_operatorEmail}}\",\n  \"phone\": \"380000000003\",\n  \"address_line\": \"Test Street 3\",\n  \"city\": \"Kyiv\",\n  \"postal_code\": \"01001\",\n  \"password\": \"{{operatorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-003: Pre 02 Create pilot (R_BASIC, certified 1 month ago)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op003_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const d = new Date();",
+                  "d.setUTCMonth(d.getUTCMonth() - 1);",
+                  "pm.collectionVariables.set('op003_certifiedOn', d.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: pilot created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op003_pilotId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pilots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pilots"
+              ]
+            },
+            "description": "Precondition 2. PILOT gate passes: R_BASIC covers OPEN; certification current (18 months).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"QA Pilot 003\",\n  \"national_id\": \"{{op003_pilotNationalId}}\",\n  \"rating\": \"R_BASIC\",\n  \"certified_on\": \"{{op003_certifiedOn}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-003: Pre 03 Create aircraft (500 g, C0)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op003_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: aircraft created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op003_aircraftId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/aircraft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "aircraft"
+              ]
+            },
+            "description": "Precondition 3. mtom_grams = 500 -> band C0; AIRCRAFT gate passes for DNI-OPN-1 (C0-C3).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manufacturer\": \"TestMaker\",\n  \"model\": \"T-1\",\n  \"serial_number\": \"{{op003_aircraftSerial}}\",\n  \"mtom_grams\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-003: Pre 04 Create flight request (start in 2 h, 60 min)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op003_pilotId', 'op003_aircraftId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const MIN = 60 * 1000;",
+                  "// Negative case: round DOWN to the minute; it only shortens the lead time, which stays under 6 h.",
+                  "const start = Math.floor(Date.now() / MIN) * MIN + 120 * MIN;",
+                  "const iso = (ms) => new Date(ms).toISOString().replace(/\\.\\d{3}Z$/, 'Z');",
+                  "pm.collectionVariables.set('op003_windowStart', iso(start));",
+                  "pm.collectionVariables.set('op003_windowEnd', iso(start + 60 * MIN));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: flight request created (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: flight request is in DRAFT', () => pm.expect(body.state).to.eql('DRAFT'));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op003_flightRequestId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests"
+              ]
+            },
+            "description": "Precondition 4. window_start = now (UTC, floored to the minute) + 2 h; window_end = window_start + 60 min. Zone DNI-OPN-1 (no curfew), altitude 50 m.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pilot_id\": \"{{op003_pilotId}}\",\n  \"aircraft_id\": \"{{op003_aircraftId}}\",\n  \"zone_code\": \"DNI-OPN-1\",\n  \"window_start\": \"{{op003_windowStart}}\",\n  \"window_end\": \"{{op003_windowEnd}}\",\n  \"requested_altitude_metres\": 50,\n  \"flight_purpose\": \"QA lead time check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-003: Step 1 Validate -> 422 TIME_WINDOW",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op003_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 1: returns 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Expected 1: failing_gate = TIME_WINDOW', () => pm.expect(body.failing_gate).to.eql('TIME_WINDOW'));",
+                  "pm.test('Expected 1: rule_reference = TSD-4 §2.1', () => pm.expect(body.rule_reference).to.eql('TSD-4 §2.1'));",
+                  "pm.test('Expected 1: message is a non-empty string', () => { pm.expect(body.message).to.be.a('string'); pm.expect(body.message.trim()).to.not.eql(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op003_flightRequestId}}/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op003_flightRequestId}}",
+                "validate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-OP-004: Lead time 6 h 30 min (class \"6 h to 60 days\") passes TIME_WINDOW gate on validate",
+      "item": [
+        {
+          "name": "API-OP-004: Pre 01 Register operator",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pwd = pm.variables.get('operatorPassword');",
+                  "if (!pwd || String(pwd).length < 8) { throw new Error('Pass operatorPassword (min 8 chars) with --env-var \"operatorPassword=...\"'); }",
+                  "['operatorId', 'pilotId', 'aircraftId', 'flightRequestId'].forEach((k) => pm.collectionVariables.set('op004_' + k, ''));",
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('op004_operatorEmail', 'api-op-004-' + ts + '@example.test');",
+                  "pm.collectionVariables.set('op004_operatorNationalId', '1' + ts);",
+                  "pm.collectionVariables.set('op004_pilotNationalId', '2' + ts);",
+                  "pm.collectionVariables.set('op004_aircraftSerial', 'SN' + ts);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: operator registered (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op004_operatorId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operators",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operators"
+              ]
+            },
+            "description": "Precondition 1. Registers a fresh operator (L1) and signs in; the session cookie is reused by the later requests of this run.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legal_name\": \"QA Operator 004\",\n  \"national_id\": \"{{op004_operatorNationalId}}\",\n  \"email\": \"{{op004_operatorEmail}}\",\n  \"phone\": \"380000000004\",\n  \"address_line\": \"Test Street 4\",\n  \"city\": \"Kyiv\",\n  \"postal_code\": \"01001\",\n  \"password\": \"{{operatorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-004: Pre 02 Create pilot (R_BASIC, certified 1 month ago)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op004_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const d = new Date();",
+                  "d.setUTCMonth(d.getUTCMonth() - 1);",
+                  "pm.collectionVariables.set('op004_certifiedOn', d.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: pilot created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op004_pilotId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pilots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pilots"
+              ]
+            },
+            "description": "Precondition 2. PILOT gate passes: R_BASIC covers OPEN; certification current (18 months).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"QA Pilot 004\",\n  \"national_id\": \"{{op004_pilotNationalId}}\",\n  \"rating\": \"R_BASIC\",\n  \"certified_on\": \"{{op004_certifiedOn}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-004: Pre 03 Create aircraft (500 g, C0)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op004_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: aircraft created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op004_aircraftId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/aircraft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "aircraft"
+              ]
+            },
+            "description": "Precondition 3. mtom_grams = 500 -> band C0; AIRCRAFT gate passes for DNI-OPN-1 (C0-C3).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manufacturer\": \"TestMaker\",\n  \"model\": \"T-1\",\n  \"serial_number\": \"{{op004_aircraftSerial}}\",\n  \"mtom_grams\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-004: Pre 04 Create flight request (start in 6 h 30 min, 60 min)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op004_pilotId', 'op004_aircraftId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const MIN = 60 * 1000;",
+                  "// Positive case: round UP to the minute so rounding never shortens the lead time.",
+                  "const start = Math.ceil(Date.now() / MIN) * MIN + 390 * MIN;",
+                  "const iso = (ms) => new Date(ms).toISOString().replace(/\\.\\d{3}Z$/, 'Z');",
+                  "pm.collectionVariables.set('op004_windowStart', iso(start));",
+                  "pm.collectionVariables.set('op004_windowEnd', iso(start + 60 * MIN));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: flight request created (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: flight request is in DRAFT', () => pm.expect(body.state).to.eql('DRAFT'));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op004_flightRequestId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests"
+              ]
+            },
+            "description": "Precondition 4. window_start = now (UTC, rounded up to the minute) + 6 h 30 min; window_end = window_start + 60 min. Zone DNI-OPN-1 (no curfew), altitude 50 m.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pilot_id\": \"{{op004_pilotId}}\",\n  \"aircraft_id\": \"{{op004_aircraftId}}\",\n  \"zone_code\": \"DNI-OPN-1\",\n  \"window_start\": \"{{op004_windowStart}}\",\n  \"window_end\": \"{{op004_windowEnd}}\",\n  \"requested_altitude_metres\": 50,\n  \"flight_purpose\": \"QA lead time check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-004: Step 1 Validate -> 200 ok",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op004_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 1: returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Expected 1: body ok = true', () => pm.expect(body.ok).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op004_flightRequestId}}/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op004_flightRequestId}}",
+                "validate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "API-OP-005: [ST] Lead time under 6 h: validate keeps DRAFT, submit rejects with failing_gate and rejection_reason, resubmit is 409",
+      "item": [
+        {
+          "name": "API-OP-005: Pre 01 Register operator",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pwd = pm.variables.get('operatorPassword');",
+                  "if (!pwd || String(pwd).length < 8) { throw new Error('Pass operatorPassword (min 8 chars) with --env-var \"operatorPassword=...\"'); }",
+                  "['operatorId', 'pilotId', 'aircraftId', 'flightRequestId'].forEach((k) => pm.collectionVariables.set('op005_' + k, ''));",
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('op005_operatorEmail', 'api-op-005-' + ts + '@example.test');",
+                  "pm.collectionVariables.set('op005_operatorNationalId', '1' + ts);",
+                  "pm.collectionVariables.set('op005_pilotNationalId', '2' + ts);",
+                  "pm.collectionVariables.set('op005_aircraftSerial', 'SN' + ts);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: operator registered (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op005_operatorId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/operators",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "operators"
+              ]
+            },
+            "description": "Precondition 1. Registers a fresh operator (L1) and signs in; the session cookie is reused by the later requests of this run.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legal_name\": \"QA Operator 005\",\n  \"national_id\": \"{{op005_operatorNationalId}}\",\n  \"email\": \"{{op005_operatorEmail}}\",\n  \"phone\": \"380000000005\",\n  \"address_line\": \"Test Street 5\",\n  \"city\": \"Kyiv\",\n  \"postal_code\": \"01001\",\n  \"password\": \"{{operatorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-005: Pre 02 Create pilot (R_BASIC, certified 1 month ago)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op005_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const d = new Date();",
+                  "d.setUTCMonth(d.getUTCMonth() - 1);",
+                  "pm.collectionVariables.set('op005_certifiedOn', d.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: pilot created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op005_pilotId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pilots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pilots"
+              ]
+            },
+            "description": "Precondition 2. PILOT gate passes: R_BASIC covers OPEN; certification current (18 months).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"QA Pilot 005\",\n  \"national_id\": \"{{op005_pilotNationalId}}\",\n  \"rating\": \"R_BASIC\",\n  \"certified_on\": \"{{op005_certifiedOn}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-005: Pre 03 Create aircraft (500 g, C0)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op005_operatorId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: aircraft created (201)', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op005_aircraftId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/aircraft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "aircraft"
+              ]
+            },
+            "description": "Precondition 3. mtom_grams = 500 -> band C0; AIRCRAFT gate passes for DNI-OPN-1 (C0-C3).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manufacturer\": \"TestMaker\",\n  \"model\": \"T-1\",\n  \"serial_number\": \"{{op005_aircraftSerial}}\",\n  \"mtom_grams\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-005: Pre 04 Create flight request (start in 2 h, 60 min)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op005_pilotId', 'op005_aircraftId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }",
+                  "const MIN = 60 * 1000;",
+                  "// Negative case: round DOWN to the minute; it only shortens the lead time, which stays under 6 h.",
+                  "const start = Math.floor(Date.now() / MIN) * MIN + 120 * MIN;",
+                  "const iso = (ms) => new Date(ms).toISOString().replace(/\\.\\d{3}Z$/, 'Z');",
+                  "pm.collectionVariables.set('op005_windowStart', iso(start));",
+                  "pm.collectionVariables.set('op005_windowEnd', iso(start + 60 * MIN));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Precondition: flight request created (201)', () => pm.response.to.have.status(201));",
+                  "pm.test('Precondition: flight request is in DRAFT', () => pm.expect(body.state).to.eql('DRAFT'));",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set('op005_flightRequestId', body.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests"
+              ]
+            },
+            "description": "Precondition 4. window_start = now (UTC, floored to the minute) + 2 h; window_end = window_start + 60 min. Zone DNI-OPN-1 (no curfew), altitude 50 m.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pilot_id\": \"{{op005_pilotId}}\",\n  \"aircraft_id\": \"{{op005_aircraftId}}\",\n  \"zone_code\": \"DNI-OPN-1\",\n  \"window_start\": \"{{op005_windowStart}}\",\n  \"window_end\": \"{{op005_windowEnd}}\",\n  \"requested_altitude_metres\": 50,\n  \"flight_purpose\": \"QA lead time check\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "API-OP-005: Step 1 Validate -> 422 TIME_WINDOW",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op005_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 1: returns 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Expected 1: failing_gate = TIME_WINDOW', () => pm.expect(body.failing_gate).to.eql('TIME_WINDOW'));",
+                  "pm.test('Expected 1: rule_reference = TSD-4 §2.1', () => pm.expect(body.rule_reference).to.eql('TSD-4 §2.1'));",
+                  "pm.test('Expected 1: message is a non-empty string', () => { pm.expect(body.message).to.be.a('string'); pm.expect(body.message.trim()).to.not.eql(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op005_flightRequestId}}/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op005_flightRequestId}}",
+                "validate"
+              ]
+            }
+          }
+        },
+        {
+          "name": "API-OP-005: Step 2 GET -> still DRAFT",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op005_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 2: returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Expected 2: state = DRAFT', () => pm.expect(body.state).to.eql('DRAFT'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op005_flightRequestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op005_flightRequestId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "API-OP-005: Step 3 Submit -> 422 TIME_WINDOW",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op005_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 3: returns 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Expected 3: failing_gate = TIME_WINDOW', () => pm.expect(body.failing_gate).to.eql('TIME_WINDOW'));",
+                  "pm.test('Expected 3: rule_reference = TSD-4 §2.1', () => pm.expect(body.rule_reference).to.eql('TSD-4 §2.1'));",
+                  "pm.test('Expected 3: message is a non-empty string', () => { pm.expect(body.message).to.be.a('string'); pm.expect(body.message.trim()).to.not.eql(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op005_flightRequestId}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op005_flightRequestId}}",
+                "submit"
+              ]
+            }
+          }
+        },
+        {
+          "name": "API-OP-005: Step 4 GET -> REJECTED with failing_gate, rule_reference, rejection_reason",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op005_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 4: returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Expected 4: state = REJECTED', () => pm.expect(body.state).to.eql('REJECTED'));",
+                  "pm.test('Expected 4: failing_gate = TIME_WINDOW', () => pm.expect(body.failing_gate).to.eql('TIME_WINDOW'));",
+                  "pm.test('Expected 4: rule_reference = TSD-4 §2.1', () => pm.expect(body.rule_reference).to.eql('TSD-4 §2.1'));",
+                  "pm.test('Expected 4: rejection_reason is a non-empty string', () => { pm.expect(body.rejection_reason).to.be.a('string'); pm.expect(body.rejection_reason.trim()).to.not.eql(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op005_flightRequestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op005_flightRequestId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "API-OP-005: Step 5 Resubmit -> 409",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const missing = ['op005_flightRequestId'].filter((k) => !pm.collectionVariables.get(k));",
+                  "if (missing.length) { console.log('Skipping: missing ' + missing.join(', ')); pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let body = {}; try { body = pm.response.json(); } catch (e) {}",
+                  "pm.test('Expected 5: returns 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Expected 5: error is a non-empty string', () => { pm.expect(body.error).to.be.a('string'); pm.expect(body.error.trim()).to.not.eql(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/flight-requests/{{op005_flightRequestId}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "flight-requests",
+                "{{op005_flightRequestId}}",
+                "submit"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "op001_operatorEmail",
+      "value": ""
+    },
+    {
+      "key": "op001_operatorNationalId",
+      "value": ""
+    },
+    {
+      "key": "op001_pilotNationalId",
+      "value": ""
+    },
+    {
+      "key": "op001_aircraftSerial",
+      "value": ""
+    },
+    {
+      "key": "op001_certifiedOn",
+      "value": ""
+    },
+    {
+      "key": "op001_windowStart",
+      "value": ""
+    },
+    {
+      "key": "op001_windowEnd",
+      "value": ""
+    },
+    {
+      "key": "op001_operatorId",
+      "value": ""
+    },
+    {
+      "key": "op001_pilotId",
+      "value": ""
+    },
+    {
+      "key": "op001_aircraftId",
+      "value": ""
+    },
+    {
+      "key": "op001_flightRequestId",
+      "value": ""
+    },
+    {
+      "key": "op002_operatorEmail",
+      "value": ""
+    },
+    {
+      "key": "op002_operatorNationalId",
+      "value": ""
+    },
+    {
+      "key": "op002_pilotNationalId",
+      "value": ""
+    },
+    {
+      "key": "op002_aircraftSerial",
+      "value": ""
+    },
+    {
+      "key": "op002_certifiedOn",
+      "value": ""
+    },
+    {
+      "key": "op002_windowStart",
+      "value": ""
+    },
+    {
+      "key": "op002_windowEnd",
+      "value": ""
+    },
+    {
+      "key": "op002_operatorId",
+      "value": ""
+    },
+    {
+      "key": "op002_pilotId",
+      "value": ""
+    },
+    {
+      "key": "op002_aircraftId",
+      "value": ""
+    },
+    {
+      "key": "op002_flightRequestId",
+      "value": ""
+    },
+    {
+      "key": "op003_operatorEmail",
+      "value": ""
+    },
+    {
+      "key": "op003_operatorNationalId",
+      "value": ""
+    },
+    {
+      "key": "op003_pilotNationalId",
+      "value": ""
+    },
+    {
+      "key": "op003_aircraftSerial",
+      "value": ""
+    },
+    {
+      "key": "op003_certifiedOn",
+      "value": ""
+    },
+    {
+      "key": "op003_windowStart",
+      "value": ""
+    },
+    {
+      "key": "op003_windowEnd",
+      "value": ""
+    },
+    {
+      "key": "op003_operatorId",
+      "value": ""
+    },
+    {
+      "key": "op003_pilotId",
+      "value": ""
+    },
+    {
+      "key": "op003_aircraftId",
+      "value": ""
+    },
+    {
+      "key": "op003_flightRequestId",
+      "value": ""
+    },
+    {
+      "key": "op004_operatorEmail",
+      "value": ""
+    },
+    {
+      "key": "op004_operatorNationalId",
+      "value": ""
+    },
+    {
+      "key": "op004_pilotNationalId",
+      "value": ""
+    },
+    {
+      "key": "op004_aircraftSerial",
+      "value": ""
+    },
+    {
+      "key": "op004_certifiedOn",
+      "value": ""
+    },
+    {
+      "key": "op004_windowStart",
+      "value": ""
+    },
+    {
+      "key": "op004_windowEnd",
+      "value": ""
+    },
+    {
+      "key": "op004_operatorId",
+      "value": ""
+    },
+    {
+      "key": "op004_pilotId",
+      "value": ""
+    },
+    {
+      "key": "op004_aircraftId",
+      "value": ""
+    },
+    {
+      "key": "op004_flightRequestId",
+      "value": ""
+    },
+    {
+      "key": "op005_operatorEmail",
+      "value": ""
+    },
+    {
+      "key": "op005_operatorNationalId",
+      "value": ""
+    },
+    {
+      "key": "op005_pilotNationalId",
+      "value": ""
+    },
+    {
+      "key": "op005_aircraftSerial",
+      "value": ""
+    },
+    {
+      "key": "op005_certifiedOn",
+      "value": ""
+    },
+    {
+      "key": "op005_windowStart",
+      "value": ""
+    },
+    {
+      "key": "op005_windowEnd",
+      "value": ""
+    },
+    {
+      "key": "op005_operatorId",
+      "value": ""
+    },
+    {
+      "key": "op005_pilotId",
+      "value": ""
+    },
+    {
+      "key": "op005_aircraftId",
+      "value": ""
+    },
+    {
+      "key": "op005_flightRequestId",
+      "value": ""
+    }
+  ]
+}

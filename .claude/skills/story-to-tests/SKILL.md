@@ -1,6 +1,6 @@
 ---
 name: story-to-tests
-description: Orchestrator for ONE UI user story from Jira to approved test cases in Testomat.io. Runs jira-intake, then story-doc-check and implementation-check (stops with a report and asks whether to continue), then writes cases with ui-test-case-creator and verifies each with tc-verifier, shows the cases and asks for approval, and only after approval writes them to Testomat.io and creates a run via testomat-sync. Stops at once if check_type is not ui (API stories get a separate flow). Run manually as /story-to-tests <ISSUE-KEY>.
+description: Orchestrator for ONE UI user story from Jira to approved test cases in Testomat.io. Runs jira-intake, then story-doc-check and implementation-check (stops with a report and asks whether to continue), then writes cases with ui-test-case-creator and verifies each with tc-verifier, shows the cases and asks for approval, and only after approval writes them to Testomat.io and creates a run via testomat-sync. Stops at once if check_type is not ui (API stories go to /story-to-api-tests). Run manually as /story-to-tests <ISSUE-KEY>.
 argument-hint: "<ISSUE-KEY>"
 disable-model-invocation: true # long flow that writes to Testomat.io: manual /story-to-tests only
 allowed-tools: Read Grep Glob Write(intake/**) Write(test-cases/**) Write(reports/**) Edit(test-cases/open-questions.md) Skill(jira-intake) Skill(story-doc-check) Skill(ui-test-case-creator) Skill(testomat-sync) Agent(implementation-check) Agent(tc-verifier) mcp__atlassian__getJiraIssue mcp__atlassian__getConfluencePage mcp__atlassian__searchConfluenceUsingCql mcp__atlassian__getPagesInConfluenceSpace
@@ -33,7 +33,8 @@ Takes **one** UI story from Jira to approved test cases in Testomat.io. This ski
 
 1. Run `jira-intake` for the key. Result: `intake/<KEY>.json`.
 2. Check `check_type`:
-   - not `ui` (`api` or `null`): **stop.** Say: "check_type is `<value>`. This flow covers UI stories only; API stories will get a separate flow." Do not infer the type from the title or text, and do not continue.
+   - `api`: **stop.** Say: "check_type is `api`. This flow covers UI stories only; run `/story-to-api-tests <KEY>` instead." Do not continue.
+   - anything else that is not `ui` (`null`, missing, unknown): **stop.** Say: "check_type is `<value>`. This flow needs `ui` (set by the issue's label)." Do not infer the type from the title or text, and do not continue.
    - `acceptance_criteria` empty or missing: **stop** and say so.
 3. Show a short intake summary: key, title, number of AC, `confluence_url` (or none).
 
