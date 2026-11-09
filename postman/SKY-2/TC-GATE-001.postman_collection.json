@@ -2,7 +2,7 @@
   "info": {
     "name": "SKY-2 · TC-GATE-001 lead time under 6 h",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Built by the api-postman-collection skill from test-cases/gates/TC-GATE-001.md.\n\nSources: 06 — Business Rules § 1.4 (TSD-4 §2.1: lead time >= 6 h), § 6 (rule_reference), § 1.1–§ 4 (pilot, aircraft, zone data); 03 — API Contract § The 422 body, § Authentication & authorisation (L1 at registration, session cookie); openapi.yaml POST /operators, /pilots, /aircraft, /flight-requests, /flight-requests/{id}/submit.\n\nSecrets: pass operatorPassword at run time with --env-var. Nothing secret is stored in this collection."
+    "description": "Built by the postman-collection-builder skill from test-cases/gates/TC-GATE-001.md.\n\nSources: 06 — Business Rules § 1.4 (TSD-4 §2.1: lead time >= 6 h), § 6 (rule_reference), § 1.1–§ 4 (pilot, aircraft, zone data); 03 — API Contract § The 422 body, § Authentication & authorisation (L1 at registration, session cookie); openapi.yaml POST /operators, /pilots, /aircraft, /flight-requests, /flight-requests/{id}/submit.\n\nSecrets: pass operatorPassword at run time with --env-var. Nothing secret is stored in this collection."
   },
   "variable": [
     { "key": "operatorEmail", "value": "", "description": "Generated in Pre 01" },
