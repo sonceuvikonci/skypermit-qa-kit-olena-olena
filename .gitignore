@@ -1,3 +1,5 @@
 /reports/ws2
 /.playwright/mcp/
 /.opencode/
+/api-automation/runs/*
+!/api-automation/runs/.gitkeep
