@@ -16,6 +16,9 @@
     ]
   },
   "permissions": {
+    "allow": [
+      "Bash(node .claude/skills/test-design/scripts/render-coverage.mjs *)"
+    ],
     "deny": [
       "Edit(../skypermit/**)",
       "Write(../skypermit/**)",
