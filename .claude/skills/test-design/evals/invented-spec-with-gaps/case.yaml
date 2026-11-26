@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: invented-spec-with-gaps
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  book-loan-policy.design.json next to the spec. "between 1 and 5" boundaries have inclusive null and
+  the boundary value itself unknown (0 invalid / 1 unknown / 2 valid; 4 valid / 5 unknown / 6 invalid);
+  "at most 2" extensions and "at least 12" age are inclusive. 4x5 state matrix where the 5 listed
+  transitions are legal and every other cell is unknown (the spec has no general prohibition), with
+  questions in unknowns. No response fields (the spec names no system responses) and questions about
+  responses instead; no invented empty/null/type classes.

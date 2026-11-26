@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: request-lifecycle-st
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  02-request-lifecycle.design.json next to the spec. 7 states, all actions (submit, approve, reject,
+  complete, cancel and the automatic gates pass / gates fail), full states x actions matrix. The 10
+  listed transitions are legal; every other cell is illegal citing the general "any pair not listed ...
+  is illegal and must return 409" rule, with response 409 quoted. The APPROVED cancel 2-hour deadline
+  is a boundary whose inclusivity ("up to") is unknown, with a question in unknowns.

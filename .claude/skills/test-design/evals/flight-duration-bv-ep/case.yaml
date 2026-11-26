@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: flight-duration-bv-ep
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  06-business-rules.design.json next to the spec. EP for duration: below 15 min invalid, 15–240 valid,
+  above 240 invalid; BV at 15 (14/15/16 → invalid/valid/valid) and 240 (239/240/241 → valid/valid/invalid),
+  step 1 minute, inclusive true quoted from the Duration line ("inclusive at both ends"). The
+  "window_end strictly after window_start" condition is a separate boundary with inclusive false.
+  state_transitions is not_applicable. All quotes verbatim with correct line numbers; no invented
+  empty/null/type classes; every EP/BV covered by a test.

@@ -21,6 +21,14 @@ The specs are no longer read from `../skypermit/docs/`. Read them through the At
 
 This script cannot call MCP, so it keeps reading the local `../skypermit/docs/06-business-rules.md` (and `07-clarifications.md`). It is the only place that still uses local docs. Its list of `rule_reference` values can be stale if Confluence changed; ui-test-case-creator and tc-verifier still check every rule against Confluence.
 
+### Exception: `specs/` snapshot
+
+`specs/` holds a verbatim markdown snapshot of two Confluence pages, saved on 2026-11-23 for skills and scripts that need the text locally:
+- `specs/06-business-rules.md` ← `06 — Business Rules` (page id `164064`, version 2)
+- `specs/02-request-lifecycle.md` ← `02 — Request Lifecycle` (page id `360449`, version 2)
+
+The source of truth is still Confluence. The snapshot is not updated automatically and can be stale: when it disagrees with Confluence, Confluence wins. Do not edit the text in `specs/`; refresh it by re-exporting the page. Cite the Confluence page, not the file.
+
 ## Layout
 
 ```

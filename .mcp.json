@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "atlassian": {
-      "type": "http",
-      "url": "https://mcp.atlassian.com/v1/mcp"
-    },
     "testomatio": {
       "type": "http",
       "url": "https://mcp.testomat.io/mcp/skypermit-4e9a2"
@@ -19,6 +15,10 @@
     "postman": {
       "type": "http",
       "url": "https://mcp.postman.com/minimal"
+    },
+    "atlassian-skypermit": {
+      "type": "http",
+      "url": "https://mcp.atlassian.com/v2/mcp"
     }
   }
 }

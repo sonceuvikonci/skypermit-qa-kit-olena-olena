@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coverage — 06-business-rules.md</title>
+<style>
+:root{--bg:#fff;--fg:#1d1d1f;--muted:#6b6b70;--line:#d9d9de;--card:#f6f6f8;
+--valid:#2e8b57;--valid-bg:#e3f3ea;--invalid:#c8323c;--invalid-bg:#fbe4e5;--unknown:#c08a00;--unknown-bg:#fbf0d4;--mixed-bg:#ececf0;}
+@media (prefers-color-scheme:dark){:root{--bg:#18181b;--fg:#ececef;--muted:#9a9aa2;--line:#3a3a40;--card:#232328;
+--valid:#5cc48a;--valid-bg:#1f3a2b;--invalid:#ef6b73;--invalid-bg:#432328;--unknown:#e5b83a;--unknown-bg:#3f3518;--mixed-bg:#2e2e34;}}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:1100px;padding:24px;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg)}
+h1{margin:0 0 4px;font-size:22px}h2{margin:36px 0 12px;font-size:18px;border-bottom:1px solid var(--line);padding-bottom:6px}
+h3{margin:22px 0 8px;font-size:15px}
+.meta{color:var(--muted);margin:4px 0}code{font-size:12.5px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.stat{background:var(--card);border-radius:8px;padding:8px 12px;min-width:86px;color:var(--muted);font-size:12px}
+.stat span{display:block;font-size:20px;font-weight:600;color:var(--fg)}
+.stat.good span{color:var(--valid)}.stat.bad span{color:var(--invalid)}.stat.warn span{color:var(--unknown)}
+.legend{color:var(--muted);font-size:12px}.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px;vertical-align:-1px}
+.sw.valid{background:var(--valid)}.sw.invalid{background:var(--invalid)}.sw.unknown{background:var(--unknown)}
+.param{background:var(--card);border-radius:10px;padding:4px 16px 12px;margin-bottom:18px}
+.nl svg{width:100%;height:auto;display:block}
+.axis{stroke:var(--fg);fill:var(--fg);stroke-width:1.2}
+.reg{stroke:none}.reg.valid{fill:var(--valid-bg)}.reg.invalid{fill:var(--invalid-bg)}.reg.unknown{fill:var(--unknown-bg)}.reg.mixed,.reg.none{fill:var(--mixed-bg)}
+.bound{stroke:var(--fg);stroke-width:1.6}
+.pt{stroke:var(--bg);stroke-width:1.5}.pt.valid,.rep.valid{fill:var(--valid)}.pt.invalid,.rep.invalid{fill:var(--invalid)}.pt.unknown,.rep.unknown{fill:var(--unknown)}
+.lead{stroke:var(--muted);stroke-dasharray:2 2}
+text{fill:var(--fg);font-size:11.5px}.vlabel{fill:var(--muted);font-size:10.5px}.blabel.unknown{fill:var(--unknown)}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px}
+.scroll{overflow-x:auto}
+.st th{white-space:nowrap}.st tbody th{color:var(--fg)}
+.cell{min-width:96px;border:1px solid var(--line);font-size:12px}
+.cell.valid{background:var(--valid-bg)}.cell.invalid{background:var(--invalid-bg)}.cell.unknown{background:var(--unknown-bg)}
+.cell.missing{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--line) 5px 6px);text-align:center}
+.cid{color:var(--muted);font-size:11px}.small{font-size:11px;margin-top:2px}
+.chip{display:inline-block;padding:0 6px;border-radius:9px;font:600 11px/18px ui-monospace,Consolas,monospace;background:var(--line);color:var(--fg);white-space:nowrap}
+.chip.k-EP{background:#dde7fb;color:#1c3f8a}.chip.k-BV{background:#efe0fa;color:#5b2385}.chip.k-ST{background:#dff3f3;color:#16615f}
+.chip.k-T{background:#e9e9ee;color:#333}.chip.k-U{background:var(--unknown-bg);color:var(--unknown)}
+@media (prefers-color-scheme:dark){.chip.k-EP{background:#23345a;color:#a9c3ff}.chip.k-BV{background:#3a2650;color:#d7b3f5}.chip.k-ST{background:#1c3c3b;color:#8fdcd8}.chip.k-T{background:#33333a;color:#ddd}}
+a{text-decoration:none}
+.badge{font-size:11px;padding:1px 6px;border-radius:4px}.badge.valid{background:var(--valid-bg);color:var(--valid)}
+.badge.invalid{background:var(--invalid-bg);color:var(--invalid)}.badge.unknown{background:var(--unknown-bg);color:var(--unknown)}
+.val{display:inline-block;padding:0 6px;border-radius:4px;margin:1px 2px 1px 0;font-size:12px}
+.val.valid{background:var(--valid-bg);color:var(--valid)}.val.invalid{background:var(--invalid-bg);color:var(--invalid)}.val.unknown{background:var(--unknown-bg);color:var(--unknown)}
+.u{color:var(--unknown);font-weight:600}
+.trace q{font-family:ui-monospace,Consolas,monospace;font-size:12px;quotes:none}.num{text-align:right;color:var(--muted)}
+.good{color:var(--valid);font-weight:600}.bad{color:var(--invalid);font-weight:600}.muted{color:var(--muted)}
+.note{padding:8px 12px;border-radius:6px;background:var(--card)}.note.warn{background:var(--unknown-bg)}.note.bad{background:var(--invalid-bg)}
+.empty{color:var(--muted);font-style:italic}
+.unknowns li{margin-bottom:8px}.unknowns li:target{background:var(--unknown-bg)}.aff{margin-top:3px}
+tr:target{background:var(--card)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Test design coverage</h1>
+  <p class="meta">spec: <code>specs/06-business-rules.md</code> · focus: <b>Duration</b>
+  · source: <code>06-business-rules.design.json</code> · rendered 2026-11-26 18:49</p>
+  
+  <div class="stats"><div class="stat "><span>5</span>EP</div><div class="stat "><span>3</span>BV</div><div class="stat "><span>0</span>ST</div><div class="stat "><span>7</span>Тести</div><div class="stat "><span>4</span>Unknowns</div><div class="stat good"><span>0</span>Без тесту</div><div class="stat good"><span>0</span>Биті id</div><div class="stat good"><span>13/13</span>Цитати ✓</div></div>
+  <p class="legend"><i class="sw valid"></i>valid / legal <i class="sw invalid"></i>invalid / illegal
+  <i class="sw unknown"></i>unknown</p>
+</header>
+
+<section>
+  <h2>1. Числові параметри: класи, межі, точки BV</h2>
+  <div class="param">
+  <h3>тривалість вікна (window_end − window_start)</h3>
+  <div class="nl"><svg viewBox="0 0 900 210" role="img" aria-label="Числова лінія тривалість вікна (window_end − window_start)">
+<rect class="reg invalid" x="40" y="111" width="90.75639599555058" height="18"><title>-24.8 … 15: invalid</title></rect>
+<rect class="reg valid" x="130.75639599555058" y="111" width="513.0700778642936" height="18"><title>15 … 240: valid</title></rect>
+<rect class="reg invalid" x="643.8264738598442" y="111" width="216.1735261401558" height="18"><title>240 … 334.8: invalid</title></rect>
+<line class="axis" x1="30" y1="120" x2="870" y2="120"/>
+<path class="axis" d="M870 120 l-7 -4 v8z"/>
+<line class="bound" x1="130.75639599555058" y1="98" x2="130.75639599555058" y2="142"/>
+<text class="blabel " x="130.75639599555058" y="154" text-anchor="middle"><tspan font-weight="600">BV-01</tspan> 15 · включно<title>15 хв — крок 1 хв — рядок 95</title></text>
+<line class="bound" x1="643.8264738598442" y1="98" x2="643.8264738598442" y2="142"/>
+<text class="blabel " x="643.8264738598442" y="154" text-anchor="middle"><tspan font-weight="600">BV-02</tspan> 240 · включно<title>240 хв — крок 1 хв — рядок 95</title></text>
+<circle class="pt invalid" cx="128.47608453837597" cy="120" r="5.5"><title>14 хв → invalid (BV-01)</title></circle>
+<circle class="pt valid" cx="130.75639599555058" cy="120" r="5.5"><title>15 хв → valid (BV-01)</title></circle>
+<circle class="pt valid" cx="133.03670745272524" cy="120" r="5.5"><title>16 хв → valid (BV-01)</title></circle>
+<circle class="pt valid" cx="641.5461624026697" cy="120" r="5.5"><title>239 хв → valid (BV-02)</title></circle>
+<circle class="pt valid" cx="643.8264738598442" cy="120" r="5.5"><title>240 хв → valid (BV-02)</title></circle>
+<circle class="pt invalid" cx="646.1067853170189" cy="120" r="5.5"><title>241 хв → invalid (BV-02)</title></circle>
+<text class="vlabel" x="128.47608453837597" y="102" text-anchor="middle">14</text>
+<text class="vlabel" x="130.75639599555058" y="88" text-anchor="middle">15</text>
+<text class="vlabel" x="133.03670745272524" y="102" text-anchor="middle">16</text>
+<text class="vlabel" x="641.5461624026697" y="102" text-anchor="middle">239</text>
+<text class="vlabel" x="643.8264738598442" y="88" text-anchor="middle">240</text>
+<text class="vlabel" x="646.1067853170189" y="102" text-anchor="middle">241</text>
+<line class="lead" x1="119.35483870967741" y1="30" x2="119.35483870967741" y2="108"/>
+<path class="rep invalid" d="M119.35483870967741 110 l-5 -8 h10z"><title>EP-01: менше 15 хвилин — представник 10 хв</title></path>
+<text class="rlabel" x="119.35483870967741" y="26" text-anchor="middle"><tspan font-weight="600">EP-01</tspan> 10</text>
+<line class="lead" x1="370.18909899888763" y1="30" x2="370.18909899888763" y2="108"/>
+<path class="rep valid" d="M370.18909899888763 110 l-5 -8 h10z"><title>EP-02: 15–240 хвилин — представник 120 хв</title></path>
+<text class="rlabel" x="370.18909899888763" y="26" text-anchor="middle"><tspan font-weight="600">EP-02</tspan> 120</text>
+<line class="lead" x1="780.6451612903226" y1="30" x2="780.6451612903226" y2="108"/>
+<path class="rep invalid" d="M780.6451612903226 110 l-5 -8 h10z"><title>EP-03: більше 240 хвилин — представник 300 хв</title></path>
+<text class="rlabel" x="780.6451612903226" y="26" text-anchor="middle"><tspan font-weight="600">EP-03</tspan> 300</text>
+</svg></div>
+  <table><thead><tr><th>EP</th><th>Клас</th><th></th><th>Представник</th><th>Response</th><th>Рядок</th><th>Тести</th><th>Unknowns</th></tr></thead><tbody><tr><td><span class="chip k-EP">EP-01</span></td><td>менше 15 хвилин</td><td><span class="badge invalid">invalid</span></td>
+<td>10 хв</td><td><span title="рядок 188: | `TIME_WINDOW` | Duration out of range | `TSD-4 §3` |">failing_gate TIME_WINDOW, rule_reference TSD-4 §3</span></td><td><span title="15–240 minutes, inclusive at both ends.">95</span></td><td><a href="#T-03"><span class="chip k-T">T-03</span></a></td><td><a href="#U-01"><span class="chip k-U">U-01</span></a> <a href="#U-04"><span class="chip k-U">U-04</span></a></td></tr><tr><td><span class="chip k-EP">EP-02</span></td><td>15–240 хвилин</td><td><span class="badge valid">valid</span></td>
+<td>120 хв</td><td><span class="muted">—</span></td><td><span title="15–240 minutes, inclusive at both ends.">95</span></td><td><a href="#T-04"><span class="chip k-T">T-04</span></a></td><td><a href="#U-01"><span class="chip k-U">U-01</span></a></td></tr><tr><td><span class="chip k-EP">EP-03</span></td><td>більше 240 хвилин</td><td><span class="badge invalid">invalid</span></td>
+<td>300 хв</td><td><span title="рядок 188: | `TIME_WINDOW` | Duration out of range | `TSD-4 §3` |">failing_gate TIME_WINDOW, rule_reference TSD-4 §3</span></td><td><span title="15–240 minutes, inclusive at both ends.">95</span></td><td><a href="#T-05"><span class="chip k-T">T-05</span></a></td><td><a href="#U-01"><span class="chip k-U">U-01</span></a> <a href="#U-04"><span class="chip k-U">U-04</span></a></td></tr></tbody></table><table><thead><tr><th>BV</th><th>Межа</th><th>Включно</th><th>Крок</th><th>Значення</th><th>Рядок</th><th>Тести</th><th>Unknowns</th></tr></thead><tbody><tr><td><span class="chip k-BV">BV-01</span></td><td>15 хв</td><td>так</td><td>1 хв</td>
+<td><span class="val invalid">14 хв</span><small> → failing_gate TIME_WINDOW, rule_reference TSD-4 §3</small> <span class="val valid">15 хв</span> <span class="val valid">16 хв</span></td>
+<td><span title="15–240 minutes, inclusive at both ends.">95</span></td><td><a href="#T-01"><span class="chip k-T">T-01</span></a></td><td><a href="#U-02"><span class="chip k-U">U-02</span></a> <a href="#U-04"><span class="chip k-U">U-04</span></a></td></tr><tr><td><span class="chip k-BV">BV-02</span></td><td>240 хв</td><td>так</td><td>1 хв</td>
+<td><span class="val valid">239 хв</span> <span class="val valid">240 хв</span> <span class="val invalid">241 хв</span><small> → failing_gate TIME_WINDOW, rule_reference TSD-4 §3</small></td>
+<td><span title="15–240 minutes, inclusive at both ends.">95</span></td><td><a href="#T-02"><span class="chip k-T">T-02</span></a></td><td><a href="#U-02"><span class="chip k-U">U-02</span></a> <a href="#U-04"><span class="chip k-U">U-04</span></a></td></tr></tbody></table>
+</div>
+  <h3>Нечислові параметри</h3><table><thead><tr><th>EP</th><th>Клас</th><th></th><th>Представник</th><th>Response</th><th>Рядок</th><th>Тести</th><th>Unknowns</th></tr></thead><tbody><tr><td><span class="chip k-EP">EP-04</span></td><td>window_end строго після window_start</td><td><span class="badge valid">valid</span></td>
+<td>window_end = window_start + 120 хв</td><td><span class="muted">—</span></td><td><span title="`window_end` strictly after `window_start`.">95</span></td><td><a href="#T-04"><span class="chip k-T">T-04</span></a></td><td><a href="#U-01"><span class="chip k-U">U-01</span></a></td></tr><tr><td><span class="chip k-EP">EP-05</span></td><td>window_end не пізніше window_start (раніше або рівно)</td><td><span class="badge invalid">invalid</span></td>
+<td>window_end = window_start − 30 хв</td><td><span class="muted">—</span></td><td><span title="`window_end` strictly after `window_start`.">95</span></td><td><a href="#T-06"><span class="chip k-T">T-06</span></a></td><td><a href="#U-01"><span class="chip k-U">U-01</span></a> <a href="#U-03"><span class="chip k-U">U-03</span></a></td></tr></tbody></table><table><thead><tr><th>BV</th><th>Межа</th><th>Включно</th><th>Крок</th><th>Значення</th><th>Рядок</th><th>Тести</th><th>Unknowns</th></tr></thead><tbody><tr><td><span class="chip k-BV">BV-03</span></td><td>window_end = window_start</td><td>ні</td><td>1 хв</td>
+<td><span class="val invalid">window_end = window_start − 1 хв</span> <span class="val invalid">window_end = window_start</span> <span class="val invalid">window_end = window_start + 1 хв (умова «strictly after» виконана, але тривалість 1 хв &lt; 15 хв)</span><small> → failing_gate TIME_WINDOW, rule_reference TSD-4 §3</small></td>
+<td><span title="`window_end` strictly after `window_start`.">95</span></td><td><a href="#T-07"><span class="chip k-T">T-07</span></a></td><td><a href="#U-03"><span class="chip k-U">U-03</span></a></td></tr></tbody></table>
+</section>
+
+<section>
+  <h2>2. Стан × дія</h2>
+  <p class="note">Не застосовується: Правило Duration (§1.4) обмежує лише значення window_start/window_end і не визначає станів чи переходів між ними.</p>
+</section>
+
+<section>
+  <h2>3. Трасування: цитата → елемент → тест</h2>
+  <div class="scroll"><table class="trace"><thead><tr><th>Рядок</th><th></th><th>Цитата</th><th>Елементи</th><th>Тести</th></tr></thead><tbody><tr><td class="num">95</td><td><span class="good" title="дослівний підрядок рядка">✓</span></td><td><q>15–240 minutes, inclusive at both ends.</q></td><td><div><span class="chip k-EP">EP-01</span> <small class="muted">тривалість вікна (window_end − window_start): менше 15 хвилин (invalid)</small></div><div><span class="chip k-EP">EP-02</span> <small class="muted">тривалість вікна (window_end − window_start): 15–240 хвилин (valid)</small></div><div><span class="chip k-EP">EP-03</span> <small class="muted">тривалість вікна (window_end − window_start): більше 240 хвилин (invalid)</small></div><div><span class="chip k-BV">BV-01</span> <small class="muted">тривалість вікна (window_end − window_start): межа 15 хв</small></div><div><span class="chip k-BV">BV-02</span> <small class="muted">тривалість вікна (window_end − window_start): межа 240 хв</small></div></td><td><a href="#T-03"><span class="chip k-T">T-03</span></a> <a href="#T-04"><span class="chip k-T">T-04</span></a> <a href="#T-05"><span class="chip k-T">T-05</span></a> <a href="#T-01"><span class="chip k-T">T-01</span></a> <a href="#T-02"><span class="chip k-T">T-02</span></a></td></tr><tr><td class="num">95</td><td><span class="good" title="дослівний підрядок рядка">✓</span></td><td><q>`window_end` strictly after `window_start`.</q></td><td><div><span class="chip k-EP">EP-04</span> <small class="muted">window_end відносно window_start: window_end строго після window_start (valid)</small></div><div><span class="chip k-EP">EP-05</span> <small class="muted">window_end відносно window_start: window_end не пізніше window_start (раніше або рівно) (invalid)</small></div><div><span class="chip k-BV">BV-03</span> <small class="muted">window_end відносно window_start: межа window_end = window_start</small></div></td><td><a href="#T-04"><span class="chip k-T">T-04</span></a> <a href="#T-06"><span class="chip k-T">T-06</span></a> <a href="#T-07"><span class="chip k-T">T-07</span></a></td></tr><tr><td class="num">188</td><td><span class="good" title="дослівний підрядок рядка">✓</span></td><td><q>| `TIME_WINDOW` | Duration out of range | `TSD-4 §3` |</q></td><td><div><span class="chip k-EP">EP-01</span> <small>(response)</small> <small class="muted">тривалість вікна (window_end − window_start): менше 15 хвилин (invalid)</small></div><div><span class="chip k-EP">EP-03</span> <small>(response)</small> <small class="muted">тривалість вікна (window_end − window_start): більше 240 хвилин (invalid)</small></div><div><span class="chip k-BV">BV-01</span> <small>(response @ 14 хв)</small> <small class="muted">тривалість вікна (window_end − window_start): межа 15 хв</small></div><div><span class="chip k-BV">BV-02</span> <small>(response @ 241 хв)</small> <small class="muted">тривалість вікна (window_end − window_start): межа 240 хв</small></div><div><span class="chip k-BV">BV-03</span> <small>(response @ window_end = window_start + 1 хв (умова «strictly after» виконана, але тривалість 1 хв &lt; 15 хв))</small> <small class="muted">window_end відносно window_start: межа window_end = window_start</small></div></td><td><a href="#T-03"><span class="chip k-T">T-03</span></a> <a href="#T-05"><span class="chip k-T">T-05</span></a> <a href="#T-01"><span class="chip k-T">T-01</span></a> <a href="#T-02"><span class="chip k-T">T-02</span></a> <a href="#T-07"><span class="chip k-T">T-07</span></a></td></tr></tbody></table></div>
+  
+  
+  <h3>Тести</h3>
+  <table><thead><tr><th>Тест</th><th>Покриває</th></tr></thead><tbody><tr id="T-01"><td><span class="chip k-T">T-01</span></td><td><span class="chip k-BV">BV-01</span></td></tr><tr id="T-02"><td><span class="chip k-T">T-02</span></td><td><span class="chip k-BV">BV-02</span></td></tr><tr id="T-03"><td><span class="chip k-T">T-03</span></td><td><span class="chip k-EP">EP-01</span></td></tr><tr id="T-04"><td><span class="chip k-T">T-04</span></td><td><span class="chip k-EP">EP-02</span> <span class="chip k-EP">EP-04</span></td></tr><tr id="T-05"><td><span class="chip k-T">T-05</span></td><td><span class="chip k-EP">EP-03</span></td></tr><tr id="T-06"><td><span class="chip k-T">T-06</span></td><td><span class="chip k-EP">EP-05</span></td></tr><tr id="T-07"><td><span class="chip k-T">T-07</span></td><td><span class="chip k-BV">BV-03</span></td></tr></tbody></table>
+  <h3 id="unknowns">Unknowns (4)</h3>
+  <ol class="unknowns"><li id="U-01"><b>U-01</b> Що відбувається, якщо window_start або window_end порожні, відсутні чи в неправильному форматі? Текст про такі значення мовчить.<div class="aff">affects: <span class="chip k-EP">EP-01</span> <span class="chip k-EP">EP-02</span> <span class="chip k-EP">EP-03</span> <span class="chip k-EP">EP-04</span> <span class="chip k-EP">EP-05</span></div></li><li id="U-02"><b>U-02</b> З якою точністю зберігаються й порівнюються window_start/window_end — хвилини чи секунди? Як рахується тривалість 14 хв 59 с або 240 хв 30 с (округлення, відкидання секунд)?<div class="aff">affects: <span class="chip k-BV">BV-01</span> <span class="chip k-BV">BV-02</span></div></li><li id="U-03"><b>U-03</b> Що повертає система, коли window_end не пізніше window_start: ту саму відмову TIME_WINDOW / TSD-4 §3 «Duration out of range» чи окрему помилку валідації (до запуску гейтів)? У таблиці §6 окремого рядка для цієї умови немає, а сама умова повністю перекривається мінімумом 15 хв.<div class="aff">affects: <span class="chip k-EP">EP-05</span> <span class="chip k-BV">BV-03</span></div></li><li id="U-04"><b>U-04</b> Якщо в межах гейта TIME_WINDOW одночасно порушено тривалість і іншу умову (lead time, curfew, overlap), який rule_reference повертається? Порядок умов усередині гейта текст не задає.<div class="aff">affects: <span class="chip k-EP">EP-01</span> <span class="chip k-EP">EP-03</span> <span class="chip k-BV">BV-01</span> <span class="chip k-BV">BV-02</span></div></li></ol>
+</section>
+</body>
+</html>

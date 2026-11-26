@@ -1,0 +1,62 @@
+{
+  "spec": "specs/06-business-rules.md",
+  "focus": "Duration",
+  "equivalence_classes": [
+    {"id": "EP-01", "parameter": "тривалість вікна (window_end − window_start)", "class": "менше 15 хвилин", "valid": false, "representative": "10 хв",
+     "quote": {"line": 95, "text": "15–240 minutes, inclusive at both ends."},
+     "response": {"value": "failing_gate TIME_WINDOW, rule_reference TSD-4 §3", "quote": {"line": 188, "text": "| `TIME_WINDOW` | Duration out of range | `TSD-4 §3` |"}}},
+    {"id": "EP-02", "parameter": "тривалість вікна (window_end − window_start)", "class": "15–240 хвилин", "valid": true, "representative": "120 хв",
+     "quote": {"line": 95, "text": "15–240 minutes, inclusive at both ends."}},
+    {"id": "EP-03", "parameter": "тривалість вікна (window_end − window_start)", "class": "більше 240 хвилин", "valid": false, "representative": "300 хв",
+     "quote": {"line": 95, "text": "15–240 minutes, inclusive at both ends."},
+     "response": {"value": "failing_gate TIME_WINDOW, rule_reference TSD-4 §3", "quote": {"line": 188, "text": "| `TIME_WINDOW` | Duration out of range | `TSD-4 §3` |"}}},
+    {"id": "EP-04", "parameter": "window_end відносно window_start", "class": "window_end строго після window_start", "valid": true, "representative": "window_end = window_start + 120 хв",
+     "quote": {"line": 95, "text": "`window_end` strictly after `window_start`."}},
+    {"id": "EP-05", "parameter": "window_end відносно window_start", "class": "window_end не пізніше window_start (раніше або рівно)", "valid": false, "representative": "window_end = window_start − 30 хв",
+     "quote": {"line": 95, "text": "`window_end` strictly after `window_start`."}}
+  ],
+  "boundary_values": [
+    {"id": "BV-01", "parameter": "тривалість вікна (window_end − window_start)", "boundary": "15 хв", "inclusive": true, "step": "1 хв",
+     "values": [
+       {"value": "14 хв", "expected": "invalid",
+        "response": {"value": "failing_gate TIME_WINDOW, rule_reference TSD-4 §3", "quote": {"line": 188, "text": "| `TIME_WINDOW` | Duration out of range | `TSD-4 §3` |"}}},
+       {"value": "15 хв", "expected": "valid"},
+       {"value": "16 хв", "expected": "valid"}
+     ],
+     "quote": {"line": 95, "text": "15–240 minutes, inclusive at both ends."}},
+    {"id": "BV-02", "parameter": "тривалість вікна (window_end − window_start)", "boundary": "240 хв", "inclusive": true, "step": "1 хв",
+     "values": [
+       {"value": "239 хв", "expected": "valid"},
+       {"value": "240 хв", "expected": "valid"},
+       {"value": "241 хв", "expected": "invalid",
+        "response": {"value": "failing_gate TIME_WINDOW, rule_reference TSD-4 §3", "quote": {"line": 188, "text": "| `TIME_WINDOW` | Duration out of range | `TSD-4 §3` |"}}}
+     ],
+     "quote": {"line": 95, "text": "15–240 minutes, inclusive at both ends."}},
+    {"id": "BV-03", "parameter": "window_end відносно window_start", "boundary": "window_end = window_start", "inclusive": false, "step": "1 хв",
+     "values": [
+       {"value": "window_end = window_start − 1 хв", "expected": "invalid"},
+       {"value": "window_end = window_start", "expected": "invalid"},
+       {"value": "window_end = window_start + 1 хв (умова «strictly after» виконана, але тривалість 1 хв < 15 хв)", "expected": "invalid",
+        "response": {"value": "failing_gate TIME_WINDOW, rule_reference TSD-4 §3", "quote": {"line": 188, "text": "| `TIME_WINDOW` | Duration out of range | `TSD-4 §3` |"}}}
+     ],
+     "quote": {"line": 95, "text": "`window_end` strictly after `window_start`."}}
+  ],
+  "state_transitions": {
+    "not_applicable": "Правило Duration (§1.4) обмежує лише значення window_start/window_end і не визначає станів чи переходів між ними."
+  },
+  "tests": [
+    {"id": "T-01", "covers": ["BV-01"]},
+    {"id": "T-02", "covers": ["BV-02"]},
+    {"id": "T-03", "covers": ["EP-01"]},
+    {"id": "T-04", "covers": ["EP-02", "EP-04"]},
+    {"id": "T-05", "covers": ["EP-03"]},
+    {"id": "T-06", "covers": ["EP-05"]},
+    {"id": "T-07", "covers": ["BV-03"]}
+  ],
+  "unknowns": [
+    {"id": "U-01", "question": "Що відбувається, якщо window_start або window_end порожні, відсутні чи в неправильному форматі? Текст про такі значення мовчить.", "affects": ["EP-01", "EP-02", "EP-03", "EP-04", "EP-05"]},
+    {"id": "U-02", "question": "З якою точністю зберігаються й порівнюються window_start/window_end — хвилини чи секунди? Як рахується тривалість 14 хв 59 с або 240 хв 30 с (округлення, відкидання секунд)?", "affects": ["BV-01", "BV-02"]},
+    {"id": "U-03", "question": "Що повертає система, коли window_end не пізніше window_start: ту саму відмову TIME_WINDOW / TSD-4 §3 «Duration out of range» чи окрему помилку валідації (до запуску гейтів)? У таблиці §6 окремого рядка для цієї умови немає, а сама умова повністю перекривається мінімумом 15 хв.", "affects": ["EP-05", "BV-03"]},
+    {"id": "U-04", "question": "Якщо в межах гейта TIME_WINDOW одночасно порушено тривалість і іншу умову (lead time, curfew, overlap), який rule_reference повертається? Порядок умов усередині гейта текст не задає.", "affects": ["EP-01", "EP-03", "BV-01", "BV-02"]}
+  ]
+}
