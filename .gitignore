@@ -3,3 +3,4 @@
 /.opencode/
 /api-automation/runs/*
 !/api-automation/runs/.gitkeep
+/.claude/skills/test-design-workspace/
