@@ -8,6 +8,7 @@ allowed-tools:
   - Glob
   - Write(**/*.design.json)
   - Bash(node *render-coverage.mjs*)
+model: sonnet
 ---
 
 # Test design: EP, BV, ST
